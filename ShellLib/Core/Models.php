@@ -1,12 +1,13 @@
 <?php
-require_once('/ShellLib/Core/ModelCollection.php');
 class Models
 {
     protected $ModelCollections;
+    protected $ModelNameLookupTable;
 
     public function __construct()
     {
         $this->ModelCollections = array();
+        $this->ModelNameLookupTable = array();
     }
 
     public function __get($modelName)
@@ -25,6 +26,7 @@ class Models
             $modelCollection->ModelName = $modelName;
             $modelCollection->ModelCache = $modelCache;
             $this->AddModel($modelName, $modelCollection);
+            $this->AddLookupTable($modelName, $modelCache['MetaData']['TableName']);
         }
     }
 
@@ -34,5 +36,22 @@ class Models
         }
 
         $this->ModelCollections[$modelName] = $model;
+    }
+
+    public function AddLookupTable($modelName, $tableName)
+    {
+        $this->ModelNameLookupTable[$tableName] = $modelName;
+    }
+
+    public function GetModelForName($modelName)
+    {
+        return $this->ModelCollections[$modelName];
+    }
+
+    public function GetModelNameForTable($tableName)
+    {
+        if(array_key_exists($tableName, $this->ModelNameLookupTable)){
+            return $this->ModelNameLookupTable[$tableName];
+        }
     }
 }

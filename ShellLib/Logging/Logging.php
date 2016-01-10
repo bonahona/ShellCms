@@ -1,6 +1,6 @@
 <?php
-require_once('/ShellLib/Logging/DatabaseLog.php');
-require_once('/ShellLib/Logging/FileLog.php');
+require_once('./ShellLib/Logging/DatabaseLog.php');
+require_once('./ShellLib/Logging/FileLog.php');
 class Logging
 {
     protected $Loggers;

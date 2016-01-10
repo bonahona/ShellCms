@@ -2,9 +2,7 @@ ShellCms
  Version 1, 16 December 2015
  ---------------------------
 
- This software is an MVC framework for PHP. The name ShellCMS is somewhat misused as this is not in itself a CMS
- but was supposed to be one, until I added support for plugins and separated the the pure MVC framework and the CMS bits.
- The CMS plugin will be released later.
+ This software is an MVC framework for PHP.
  
  
  License

@@ -1,24 +1,30 @@
 <?php
 // Class built to act as a proxy for models containing foreign keys to other objects.
-// This is built to whenever a model with references is loaded it does not have to actually load all other obejcst from db
+// This is built to whenever a model with references is loaded it does not have to actually load all other objects from db
 // but their info is stored so they can be loaded upon request
 class ModelProxy
 {
-    protected $m_primaryKey;
-    protected $m_model;
-    protected  $m_object;
+    public $FieldName;
+    public $PrimaryKey;
+    public $Model;
+    public $Object;
 
-    function __construct($primaryKey, $model)
+    function __construct($fieldName, $model)
     {
-        $this->m_primaryKey = $primaryKey;
-        $this->m_model = $model;
-        $this->m_object = null;
+        $this->FieldName = $fieldName;
+        $this->PrimaryKey = null;
+        $this->Model = $model;
+        $this->Object = null;
     }
 
     public function Load()
     {
-        if($this->m_object == null){
-            $this->m_object = $this->m_model->Find($this->m_primaryKey);
+        if($this->PrimaryKey == null || $this->Model == null){
+            return;
+        }
+
+        if($this->Object == null){
+            $this->Object = $this->Model->Find($this->PrimaryKey);
         }
     }
 }

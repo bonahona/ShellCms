@@ -1,7 +1,6 @@
 <?php
-
-define('SERVER_ROOT', str_replace('/index.php', '', $_SERVER['PHP_SELF']));
-define('APPLICATION_ROOT',      $_SERVER['DOCUMENT_ROOT']. SERVER_ROOT);
+define('SERVER_ROOT', str_ireplace('/Index.php', '', $_SERVER['PHP_SELF']));
+define('APPLICATION_ROOT',      $_SERVER['DOCUMENT_ROOT']);
 define('APPLICATION_FOLDER',    '/Application');
 define('CONFIG_FOLDER',         '/Config/');
 define('CONTROLLER_FOLDER',     '/Controllers/');
@@ -14,6 +13,7 @@ define('MODEL_CACHE_FOLDER',    '/Application/Temp/Cache/Models/');
 define('CSS_FOLDER',            '/Content/Css/');
 define('JS_FOLDER',             '/Content/Js/');
 define('IMAGE_FOLDER',          '/Content/Images/');
+define('DATABASE_DRIVER_FOLDER','./ShellLib/DatabaseDrivers/');
 
 define('VIEW_FILE_ENDING', '.php');
 define('MODEL_CACHE_FILE_ENDING', '.model');
@@ -21,26 +21,32 @@ define('PHP_FILE_ENDING', '.php');
 define('CSS_FILE_ENDING', '.css');
 define('JS_FILE_ENDING', '.js');
 
-require_once('/ShellLib/Core/ConfigParser.php');
-require_once('/ShellLib/Core/Controller.php');
-require_once('/ShellLib/Core/Model.php');
-require_once('/ShellLib/Core/Database.php');
-require_once('/ShellLib/Core/Models.php');
-require_once('/ShellLib/Files/File.php');
-require_once('/ShellLib/Logging/Logging.php');
-require_once('/ShellLib/Helpers/DirectoryHelper.php');
-require_once('/ShellLib/Helpers/ModelHelper.php');
-require_once('/ShellLib/Helpers/UrlHelper.php');
-require_once('/ShellLib/Helpers/ArrayHelper.php');
-require_once('/ShellLib/Core/Collection.php');
-require_once('/ShellLib/Helpers/FormHelper.php');
-require_once('/ShellLib/Helpers/ModelValidationHelper.php');
-require_once('/ShellLib/Helpers/DataHelper.php');
-require_once('/ShellLib/Helpers/SessionHelper.php');
-require_once('/ShellLib/Helpers/HtmlHelper.php');
+require_once('./ShellLib/Core/ConfigParser.php');
+require_once('./ShellLib/Core/Controller.php');
+require_once('./ShellLib/Core/ModelProxy.php');
+require_once('./ShellLib/Core/ModelProxyCollection.php');
+require_once('./ShellLib/Core/Model.php');
+require_once('./ShellLib/Core/IDatabaseDriver.php');
+require_once('./ShellLib/Core/Models.php');
+require_once('./ShellLib/Files/File.php');
+require_once('./ShellLib/Logging/Logging.php');
+require_once('./ShellLib/Helpers/DirectoryHelper.php');
+require_once('./ShellLib/Helpers/ModelHelper.php');
+require_once('./ShellLib/Helpers/UrlHelper.php');
+require_once('./ShellLib/Helpers/ArrayHelper.php');
+require_once('./ShellLib/Helpers/FormHelper.php');
+require_once('./ShellLib/Helpers/ModelValidationHelper.php');
+require_once('./ShellLib/Helpers/DataHelper.php');
+require_once('./ShellLib/Helpers/SessionHelper.php');
+require_once('./ShellLib/Helpers/HtmlHelper.php');
+require_once('./ShellLib/Utility/StringUtilities.php');
 
-// Public global variable to keep track of all model collections
-$models = new Models();
+require_once('./ShellLib/Collections/ICollection.php');
+require_once('./ShellLib/Collections/IDataCollection.php');
+require_once('./ShellLib/Collections/Collection.php');
+require_once('./ShellLib/Collections/ModelCollection.php');
+require_once('./ShellLib/Collections/SqlCollection.php');
+
 
 // External reference to the core instance
 class Core
@@ -48,11 +54,13 @@ class Core
     public static $Instance;
 
     protected $ApplicationConfig;
+    protected $DatabaseConfig;
     protected $RoutesConfig;
 
     protected $Logging;
     protected $ModelCache;
     protected $Models;
+    protected $ModelHelper;
     protected $RequestUrl;
     protected $Database;
     protected $Controller;
@@ -91,6 +99,10 @@ class Core
 
     public function &GetLogging(){
         return $this->Logging;
+    }
+
+    public function &GetModelHelper(){
+        return $this->ModelHelper;
     }
 
     public function GetRequestUrl(){
@@ -162,6 +174,11 @@ class Core
         return $this->Plugins;
     }
 
+    public function &GetModels()
+    {
+        return $this->Models;
+    }
+
     // Creates the core object that is used for the application and any plugins that are included
     // SubPath is used when a plugin is created where the path supplied points out the relative path to the plugin (For model and controller inclusions
     function __construct($subPath = null, $primaryCore = null)
@@ -172,6 +189,7 @@ class Core
             $this->PrimaryCore = $this;
 
             $this->ModelCache = array();
+            $this->ModelHelper = new ModelHelper();
 
             $this->SetupFolders();
             if(!$this->ReadConfig()){
@@ -185,7 +203,6 @@ class Core
             $this->PluginPath = '';
             $this->SetupPlugins();
 
-            $this->SetupModels();
         }else{
             $this->IsPrimaryCode = false;
             $this->PluginPath = $subPath;
@@ -196,6 +213,12 @@ class Core
             $this->CacheModels();
             $this->Logging = $primaryCore->GetLogging();
             $this->Database = $primaryCore->GetDatabase();
+        }
+
+        // We are now sure all models have been loaded and all plugins initialized
+        if($subPath == null) {
+            $this->UpdateModelReferences();
+            $this->SetupModels();
         }
     }
 
@@ -233,6 +256,12 @@ class Core
             return false;
         }
 
+        // Read database config
+        $this->DatabaseConfig = ParseConfig($this, 'DatabaseConfig.json');
+        if($this->DatabaseConfig === false){
+            $this->DatabaseConfig = array();
+        }
+
         // Read the routes config
         $this->RoutesConfig = ParseConfig($this, 'Routes.json');
         if($this->RoutesConfig === false) {
@@ -257,13 +286,44 @@ class Core
 
     protected function SetupDatabase()
     {
-        // Open the database
-        $this->Database = new Database($this);
+        if(!empty($this->DatabaseConfig)) {
+
+            $databaseType = $this->DatabaseConfig['Database']['DatabaseType'];
+
+            // Handle the provider types given
+            if($databaseType == 'MySqli'){
+                $databaseProviderPath = DATABASE_DRIVER_FOLDER . 'MySqliDatabase.php';
+                require_once($databaseProviderPath);
+                $this->Database = new MySqliDatabase($this, $this->DatabaseConfig);
+            }else if($databaseType == 'PDO'){
+                $databaseProviderPath = DATABASE_DRIVER_FOLDER . 'PdoDatabase.php';
+                require_once($databaseProviderPath);
+                $this->Database = new PdoDatabase($this, $this->DatabaseConfig);
+            }else{
+                die("Unknown database provider type: $databaseType");
+            }
+        }
+    }
+
+    protected function DebugDontCacheModels()
+    {
+        // Read debug data from the log
+        $dontCacheModels = false;
+        if(array_key_exists('Debug', $this->ApplicationConfig)){
+            if(array_key_exists('DontCacheModels', $this->ApplicationConfig['Debug'])){
+                $dontCacheModels = $this->ApplicationConfig['Debug']['DontCacheModels'];
+            }
+        }
+
+        return $dontCacheModels;
     }
 
     // Iterates over each model to make sure they are cached
     protected function CacheModels()
     {
+        // Read debug data from the log
+        $dontCacheModels = $this->DebugDontCacheModels();
+
         // Make sure the model folder exists
         $modelCacheFolder = Directory($this->ModelFolder);
         if(!is_dir($modelCacheFolder)){
@@ -276,12 +336,14 @@ class Core
             mkdir($cacheFilePath, 777, true);
         }
 
-        foreach(GetAllFiles($modelCacheFolder) as $modelFile){
-            $cacheFile = GetModelFilePath($this, $modelFile);
+        $modelHelper = Core::$Instance->GetModelHelper();
+        $modelFiles = GetAllFiles($modelCacheFolder);
+        foreach($modelFiles as $modelFile){
+            $cacheFile = $modelHelper->GetModelFilePath($modelFile);
             if(!file_exists($cacheFile)){
-                CacheModelFromModel($this, $modelFile, $cacheFile);
+                $modelHelper->CacheModelFromModel($this, $modelFile, $cacheFile, $dontCacheModels);
             }else{
-                ReadModelCache($this, $modelFile, $cacheFile);
+                $modelHelper->ReadModelCache($this, $modelFile, $cacheFile);
             }
         }
     }
@@ -290,6 +352,24 @@ class Core
     {
         $this->Models = new Models();
         $this->Models->Setup($this->ModelCache);
+    }
+
+    protected function UpdateModelReferences()
+    {
+        if($this->ModelHelper->ReferencesUpdated()) {
+            // Only include this file if its needed
+            require_once('./ShellLib/Utility/Pluralizer.php');
+            $pluralizer = new Pluralizer();
+            foreach(array_keys($this->ModelCache) as $modelName) {
+                $this->ModelHelper->CheckForReferences($modelName, $this->ModelCache[$modelName], $pluralizer);
+
+                $dontCacheModels = $this->DebugDontCacheModels();
+                if (!$dontCacheModels) {
+                    $modelFileName = $this->ModelHelper->GetModelFilePath($modelName);
+                    $this->ModelHelper->SaveModelCache($modelFileName, $modelName, $this->ModelCache[$modelName]);
+                }
+            }
+        }
     }
 
     public function ParseRequest()

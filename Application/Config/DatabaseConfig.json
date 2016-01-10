@@ -1,7 +1,8 @@
 {
   "Database": {
     "UseDatabase": true,
-    "Provider" : "MySql",
+    "DatabaseType" : "PDO",
+    "Provider" : "mysql",
     "Server" : "127.0.0.1",
     "Database" : "",
     "Username" : "",

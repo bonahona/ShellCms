@@ -40,6 +40,7 @@ require_once('./ShellLib/Helpers/DataHelper.php');
 require_once('./ShellLib/Helpers/SessionHelper.php');
 require_once('./ShellLib/Helpers/HtmlHelper.php');
 require_once('./ShellLib/Utility/StringUtilities.php');
+require_once('./ShellLib/Utility/ArrayUtilities.php');
 
 require_once('./ShellLib/Collections/ICollection.php');
 require_once('./ShellLib/Collections/IDataCollection.php');
@@ -309,9 +310,11 @@ class Core
     {
         // Read debug data from the log
         $dontCacheModels = false;
-        if(array_key_exists('Debug', $this->ApplicationConfig)){
-            if(array_key_exists('DontCacheModels', $this->ApplicationConfig['Debug'])){
-                $dontCacheModels = $this->ApplicationConfig['Debug']['DontCacheModels'];
+        if($this->ApplicationConfig !== false) {
+            if (array_key_exists('Debug', $this->ApplicationConfig)) {
+                if (array_key_exists('DontCacheModels', $this->ApplicationConfig['Debug'])) {
+                    $dontCacheModels = $this->ApplicationConfig['Debug']['DontCacheModels'];
+                }
             }
         }
 

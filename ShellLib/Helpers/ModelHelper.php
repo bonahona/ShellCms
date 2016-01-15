@@ -6,10 +6,39 @@ class ModelHelper
 {
     protected $ReferenceUpdatesMade;
     protected $TableReferences;
+    protected $TableNames;
 
     function __construct()
     {
+        $this->TableNames = array();
         $this->TableReferences = array();
+    }
+
+    public function AddTableName($tableName, $modelName)
+    {
+        if(!array_key_Exists($tableName, $this->TableNames)){
+            $this->TableNames[$tableName] = $modelName;
+        }
+    }
+
+    public function GetModelName($tableName)
+    {
+        if(array_key_exists($tableName, $this->TableNames)){
+            return $this->TableNames[$tableName];
+        }else{
+            die("Missing table is ModelHelper::GetModelName lookup");
+        }
+    }
+
+    public function GetTableName($modelName)
+    {
+        foreach($this->TableNames as $key => $value){
+            if($value == $modelName){
+                return $key;
+            }
+        }
+
+        die("Missing table is ModelHelper::GetTableName lookup");
     }
 
     public function GetModelFilePath($modelPath) {
@@ -60,6 +89,8 @@ class ModelHelper
         $modelCache             = &Core::$Instance->GetModelCache();
         $modelCache[$modelName] = $response;
 
+        $this->AddTableName($response['MetaData']['TableName'], $modelName);
+
         return $response;
     }
 
@@ -75,6 +106,7 @@ class ModelHelper
         $result                 = json_decode($buffer, true);
         $modelCache[$modelName] = $result;
 
+        $this->AddTableName($result['MetaData']['TableName'], $modelName);
         return $result;
     }
 
@@ -93,20 +125,30 @@ class ModelHelper
         return $this->ReferenceUpdatesMade;
     }
 
+    public function DebugReferences()
+    {
+        var_dump($this->TableReferences);
+    }
+
     public function CheckForReferences($modelName, &$modelCache, $pluralizer)
     {
-        if(array_key_exists($modelName, $this->TableReferences)){
-            foreach($this->TableReferences[$modelName] as $reference){
+        $tableName = $this->GetTableName($modelName);
+
+        var_dump($modelName);
+        var_dump($tableName);
+        var_dump($this->TableReferences);
+        if(array_key_exists($tableName, $this->TableReferences)){
+            foreach($this->TableReferences[$tableName] as $reference){
                 $referencePluralForm = $pluralizer->Pluralize($reference['ModelName']);
                 $modelCache['ReversedReferences'][$referencePluralForm] = $reference;
             }
         }
     }
 
-    protected function AddTableReference($modelName, $tableName, $reference)
-    {
+    protected function AddTableReference($modelName, $tableName, $reference) {
+
         $reference['ModelName'] = $modelName;
-        if(!array_key_exists($tableName, $this->TableReferences)){
+        if (!array_key_exists($tableName, $this->TableReferences)) {
             $this->TableReferences[$tableName] = array();
         }
 

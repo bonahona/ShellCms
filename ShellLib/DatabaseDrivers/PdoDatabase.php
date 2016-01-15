@@ -117,8 +117,8 @@ class PdoDatabase implements IDatabaseDriver
 
         $result = array(
             'Field' => ucfirst($row['COLUMN_NAME']),
-            'TableName' => ucfirst($row['REFERENCED_TABLE_NAME']),
-            'TableColumn' => ucfirst($row['REFERENCED_COLUMN_NAME'])
+            'TableName' => $row['REFERENCED_TABLE_NAME'],
+            'TableColumn' => $row['REFERENCED_COLUMN_NAME']
         );
 
         return $result;

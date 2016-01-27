@@ -169,22 +169,21 @@ class Controller
         echo json_encode($data);
     }
 
-    protected function Redirect($url, $vars = null, $code = 300){
+    protected function Redirect($url, $vars = null, $code = 301){
 
+        echo "Hi";
         if($vars != null){
             $queryParts = array();
             foreach($vars as $key => $value){
                 $queryParts[] = "$key=$value";
                 $queryString = implode(',', $queryParts);
 
-                header('Location:' . Url($url . '?' . $queryString));
+                header('Location:' . Url($url . '?' . $queryString), true, $code);
             }
         }else {
-            header('Location: ' . Url($url));
+            header('Location: ' . Url($url), true, $code);
         }
 
-        // Make sure nothing more gets written to the stream
-        http_response_code($code);
         exit;
     }
 

@@ -19,6 +19,7 @@ class Controller
     public $Core;                       // Main core for this controller
     public $CurrentCore;                // Should usually be the same one as the Core, bit might, during rendering, be set to some other one for resource purposes
     public $Config;
+    public $Helpers;                    // Reference the main core's helpers list
 
     // Data sent
     public $Post;                       // Stores all Post data variables sent in

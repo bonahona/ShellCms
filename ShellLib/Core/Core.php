@@ -6,6 +6,7 @@ define('CONFIG_FOLDER',         '/Config/');
 define('CONTROLLER_FOLDER',     '/Controllers/');
 define('MODELS_FOLDER',         '/Models/');
 define('PLUGINS_FOLDER',        '/Plugins/');
+define('HELPERS_FOLDER',        '/Helpers/');
 define('VIEWS_FOLDER',          '/Views/');
 define('PARTIAL_FOLDER',        '/Views/Partial/');
 define('LAYOUTS_FOLDER',        '/Views/Layouts');
@@ -28,6 +29,8 @@ require_once('./ShellLib/Core/ModelProxyCollection.php');
 require_once('./ShellLib/Core/Model.php');
 require_once('./ShellLib/Core/IDatabaseDriver.php');
 require_once('./ShellLib/Core/Models.php');
+require_once('./ShellLib/Core/Helpers.php');
+require_once('./ShellLib/Core/IHelper.php');
 require_once('./ShellLib/Files/File.php');
 require_once('./ShellLib/Logging/Logging.php');
 require_once('./ShellLib/Helpers/DirectoryHelper.php');
@@ -61,6 +64,7 @@ class Core
     protected $Logging;
     protected $ModelCache;
     protected $Models;
+    protected $Helpers;
     protected $ModelHelper;
     protected $RequestUrl;
     protected $Database;
@@ -77,6 +81,7 @@ class Core
 
     protected $ConfigFolder;
     protected $ModelFolder;
+    protected $HelperFolder;
     protected $ControllerFolder;
     protected $ViewFolder;
     protected $PartialFolder;
@@ -118,6 +123,11 @@ class Core
     public function GetModelFolder()
     {
         return $this->ModelFolder;
+    }
+
+    public function GetHelperFolder()
+    {
+        return $this->HelperFolder;
     }
 
     public function &GetController()
@@ -175,6 +185,11 @@ class Core
         return $this->Plugins;
     }
 
+    public function &GetHelpers()
+    {
+        return $this->Helpers;
+    }
+
     public function &GetModels()
     {
         return $this->Models;
@@ -197,6 +212,8 @@ class Core
                 die("Failed to read ApplicationConfig");
             }
 
+            $this->Helpers = new Helpers();
+            $this->SetupHelpers();
             $this->SetupLogs();
             $this->SetupDatabase();
             $this->CacheModels();
@@ -214,6 +231,8 @@ class Core
             $this->CacheModels();
             $this->Logging = $primaryCore->GetLogging();
             $this->Database = $primaryCore->GetDatabase();
+            $this->Helpers = $primaryCore->GetHelpers();
+            $this->SetupHelpers();
         }
 
         // We are now sure all models have been loaded and all plugins initialized
@@ -227,6 +246,7 @@ class Core
     {
         $this->ConfigFolder = APPLICATION_FOLDER . CONFIG_FOLDER;
         $this->ModelFolder = APPLICATION_FOLDER . MODELS_FOLDER;
+        $this->HelperFolder = APPLICATION_FOLDER . HELPERS_FOLDER;
         $this->ControllerFolder = APPLICATION_FOLDER . CONTROLLER_FOLDER;
         $this->ViewFolder = APPLICATION_FOLDER . VIEWS_FOLDER;
         $this->PartialFolder = APPLICATION_FOLDER . PARTIAL_FOLDER;
@@ -240,6 +260,7 @@ class Core
     {
         $this->ConfigFolder = $this->PluginPath . CONFIG_FOLDER;
         $this->ModelFolder = $this->PluginPath . MODELS_FOLDER;
+        $this->HelperFolder = $this->PluginPath . HELPERS_FOLDER;
         $this->ControllerFolder = $this->PluginPath . CONTROLLER_FOLDER;
         $this->ViewFolder = $this->PluginPath . VIEWS_FOLDER;
         $this->PartialFolder = $this->PluginPath . PARTIAL_FOLDER;
@@ -375,6 +396,19 @@ class Core
         }
     }
 
+    public function SetupHelpers()
+    {
+        $helperFileDirectory = Directory($this->HelperFolder);
+        $helperFiles = GetAllFiles($helperFileDirectory);
+
+        foreach($helperFiles as $helperFile){
+            $helperFileName = $helperFileDirectory . $helperFile;
+            $helperName = $this->Helpers->GetHelperName($helperFile);
+            $helperClassName = $this->Helpers->GetHelperClassName($helperFile);
+            $this->Helpers->AddHelperFile($helperName, $helperFileName, $helperClassName);
+        }
+    }
+
     public function ParseRequest()
     {
         // Find the current request folder
@@ -418,6 +452,8 @@ class Core
         $controller->Models         = $this->Models;
         $controller->RequestUri     = $requestData['RequestUri'];
         $controller->RequestString  = $requestData['RequestString'];
+        $controller->Helpers        = $this->Helpers;
+        $controller->Helpers->SetCurrentController($controller);
 
         $this->ParseData($controller);
 
@@ -548,7 +584,6 @@ class Core
     {
         // Find the request method
         $controller->Verb = $_SERVER['REQUEST_METHOD'];
-
 
         // Parse the post data sent it
         if(isset($_POST)){

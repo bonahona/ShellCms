@@ -2,6 +2,10 @@
 
 function GetAllFiles($directory)
 {
+    if(!is_dir($directory)){
+        return array();
+    }
+
     $directoryIgnores = array('.', '..');       // Used to filter out rhe current dir and parent dir from any directory when iterating
 
     $allFiles = scandir($directory);

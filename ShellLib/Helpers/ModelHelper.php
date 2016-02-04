@@ -133,10 +133,6 @@ class ModelHelper
     public function CheckForReferences($modelName, &$modelCache, $pluralizer)
     {
         $tableName = $this->GetTableName($modelName);
-
-        var_dump($modelName);
-        var_dump($tableName);
-        var_dump($this->TableReferences);
         if(array_key_exists($tableName, $this->TableReferences)){
             foreach($this->TableReferences[$tableName] as $reference){
                 $referencePluralForm = $pluralizer->Pluralize($reference['ModelName']);

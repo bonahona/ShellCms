@@ -253,7 +253,6 @@ class ModelCollection
             &$id
         );
 
-        var_dump($preparedStatement);
         call_user_func_array(array($preparedStatement, 'bind_param'), $params);
         $preparedStatement->execute();
         $preparedStatement->Close();

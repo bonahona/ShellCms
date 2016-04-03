@@ -171,20 +171,16 @@ class Controller
     }
 
     protected function Redirect($url, $vars = null, $code = 301){
-
-        echo "Hi";
         if($vars != null){
             $queryParts = array();
             foreach($vars as $key => $value){
                 $queryParts[] = "$key=$value";
                 $queryString = implode(',', $queryParts);
-
                 header('Location:' . Url($url . '?' . $queryString), true, $code);
             }
         }else {
             header('Location: ' . Url($url), true, $code);
         }
-
         exit;
     }
 

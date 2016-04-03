@@ -57,9 +57,10 @@ class Core
 {
     public static $Instance;
 
-    protected $ApplicationConfig;
-    protected $DatabaseConfig;
-    protected $RoutesConfig;
+    protected $ApplicationConfig;       // Generic application config. Applications and plugins are free to change this to their needs.
+    protected $DatabaseConfig;          // Server information and credentials to the database to use (if any).
+    protected $RoutesConfig;            // Contains hardcoded non-conventional routes aliases.
+    protected $About;                   // About file is only loaded if any feature requiring it is called.
 
     protected $Logging;
     protected $ModelCache;
@@ -405,7 +406,7 @@ class Core
             $helperFileName = $helperFileDirectory . $helperFile;
             $helperName = $this->Helpers->GetHelperName($helperFile);
             $helperClassName = $this->Helpers->GetHelperClassName($helperFile);
-            $this->Helpers->AddHelperFile($helperName, $helperFileName, $helperClassName);
+            $this->Helpers->AddHelperFile($helperName, $helperFileName, $helperClassName, $this->ApplicationConfig);
         }
     }
 
@@ -656,7 +657,7 @@ class Core
         if(!is_dir($pluginFolder)){
             mkdir($pluginFolder, 777, true);
         }
-        foreach(GetAllFiles($pluginFolder) as $plugin){
+        foreach(GetAllDirectories($pluginFolder) as $plugin){
             $pluginCore = new Core(PLUGINS_FOLDER . $plugin, $this);
             $this->Plugins[] = $pluginCore;
         }

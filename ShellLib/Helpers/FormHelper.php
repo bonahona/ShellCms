@@ -254,7 +254,7 @@ class FormHelper
             if(is_a($viewVar, 'Model') && $viewData[$this->m_currentForm]->HasProperty($name)) {
                 return $viewVar->$name;
             }else if(is_array($viewVar)){
-                return $viewData[$name];
+                return $viewVar[$name];
             }
         }else{
             return "";

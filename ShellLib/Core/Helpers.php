@@ -28,10 +28,14 @@ class Helpers
         return $result;
     }
 
-    public function AddHelperFile($helperName, $helperFile, $helperClassName)
+    public function AddHelperFile($helperName, $helperFile, $helperClassName, $pluginConfig)
     {
         if(!array_key_exists($helperName, $this->m_helperFiles)){
-            $this->m_helperFiles[$helperName] = array('File' => $helperFile, 'ClassName' => $helperClassName);
+            $this->m_helperFiles[$helperName] = array(
+                'File' => $helperFile,
+                'ClassName' => $helperClassName,
+                'Config' => $pluginConfig
+            );
             $this->m_helpers[$helperName] = null;
         }
     }
@@ -40,11 +44,13 @@ class Helpers
     {
         if(array_key_exists($helperName, $this->m_helpers)){
             if($this->m_helpers[$helperName] == null){
-                require_once($this->m_helperFiles[$helperName]['File']);
+                $filename = $this->m_helperFiles[$helperName]['File'];
                 $className = $this->m_helperFiles[$helperName]['ClassName'];
+                $pluginConfig = $this->m_helperFiles[$helperName]['Config'];
 
+                require_once($filename);
                 $helperObject =  new $className();
-                $helperObject->Init($this->m_currentController);
+                $helperObject->Init($pluginConfig, $this->m_currentController);
                 $this->m_helpers[$helperName] = $helperObject;
             }
             return $this->m_helpers[$helperName];

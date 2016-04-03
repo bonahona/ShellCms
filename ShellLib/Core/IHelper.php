@@ -1,5 +1,5 @@
 <?php
 interface IHelper
 {
-    public function Init($plugin);
+    public function Init($config, $controller);
 }

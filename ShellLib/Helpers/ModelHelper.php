@@ -38,7 +38,7 @@ class ModelHelper
             }
         }
 
-        die('Missing table is ModelHelper::GetTableName lookup: ' . $modelName);
+        die("Missing table is ModelHelper::GetTableName lookup");
     }
 
     public function GetModelFilePath($modelPath) {
@@ -135,16 +135,14 @@ class ModelHelper
         $tableName = $this->GetTableName($modelName);
         if(array_key_exists($tableName, $this->TableReferences)){
             foreach($this->TableReferences[$tableName] as $reference){
-                $remoteTableName = $this->GetTableName($reference['ModelName']);
-                $reference['TableName'] = $remoteTableName;
                 $referencePluralForm = $pluralizer->Pluralize($reference['ModelName']);
                 $modelCache['ReversedReferences'][$referencePluralForm] = $reference;
             }
         }
     }
 
-    protected function AddTableReference($modelName, $tableName, $reference)
-    {
+    protected function AddTableReference($modelName, $tableName, $reference) {
+
         $reference['ModelName'] = $modelName;
         if (!array_key_exists($tableName, $this->TableReferences)) {
             $this->TableReferences[$tableName] = array();

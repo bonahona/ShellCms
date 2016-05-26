@@ -53,5 +53,18 @@ class Models
         if(array_key_exists($tableName, $this->ModelNameLookupTable)){
             return $this->ModelNameLookupTable[$tableName];
         }
+
+        foreach($this->ModelNameLookupTable as $key => $value){
+            if($tableName == $value){
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    public function GetAll()
+    {
+        return $this->ModelCollections;
     }
 }

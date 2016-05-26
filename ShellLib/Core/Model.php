@@ -12,7 +12,10 @@ class Model
 
     function __construct($modelCollection)
     {
-        $this->Models = Core::$Instance->GetModels();
+        $coreInstanceProperty = new ReflectionProperty(CORE_CLASS, 'Instance');
+        $coreInstance =  $coreInstanceProperty->getValue();
+
+        $this->Models = $coreInstance->GetModels();
 
         // When called the model data is being cached from db, no model collection will be sent in as it only needs the table name
         if($modelCollection == null){
@@ -127,6 +130,12 @@ class Model
     public function Save()
     {
         $this->ModelCollection->Save($this);
+
+        // In case the Primary key has changed, we the references key need an update
+        foreach($this->References as $reference) {
+            $reference->PrimaryKey = $this->Properties[$reference->FieldName];
+        }
+
         $this->FlagAsSaved();
         $this->FlagAsClean();
     }
@@ -134,6 +143,39 @@ class Model
     public function Delete()
     {
         $this->ModelCollection->Delete($this);
+    }
+
+    public function Object()
+    {
+        $result = array();
+
+        foreach($this->Properties as $key => $value){
+            $result[$key] = $value;
+        }
+
+        return $result;
+    }
+
+    public function References()
+    {
+        $result = array();
+
+        foreach($this->References as $key => $value){
+            $result[] = $key;
+        }
+
+        return $result;
+    }
+
+    public function ReverseReferences()
+    {
+        $result = array();
+
+        foreach($this->ReferenceCollections as $key => $value){
+            $result[] = $key;
+        }
+
+        return $result;
     }
 
     protected function CreateReferenceName($columnName)

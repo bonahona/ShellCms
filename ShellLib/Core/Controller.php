@@ -100,8 +100,6 @@ class Controller
             die('Partial view missing ' . $partialViewName);
         }
 
-        $this->BeforeRender();
-
         if($partialViewVars != null){
             if(is_array($partialViewVars)) {
                 foreach ($partialViewVars as $key => $var) {
@@ -190,11 +188,7 @@ class Controller
 
     protected function HttpStatus($statusCode)
     {
-        if(function_exists('http_response_code')) {
-            http_response_code("404");
-        }else{
-            echo "404";
-        }
+        $this->ReturnCode = $statusCode;
     }
 
     function HttpNotFound()

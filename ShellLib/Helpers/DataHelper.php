@@ -82,6 +82,10 @@ class DataHelper implements Iterator, Countable, ArrayAccess
             foreach($this->m_items[$element] as $key => $value){
                 // Make sure the key exists in the model we are binding to
                 if(in_array($key, $model->ModelCache['MetaData']['ColumnNames']) || $key == $model->ModelCache['MetaData']['PrimaryKey']){
+					if($value == 'NULL'){
+						$value = null;
+					}
+					
                     $result->$key = $value;
                 }
             }
@@ -98,6 +102,10 @@ class DataHelper implements Iterator, Countable, ArrayAccess
         if(isset($this->m_items[$element])){
             $result = array();
             foreach($this->m_items[$element] as $key => $value){
+				if($value == 'NULL'){
+					$value = null;
+				}
+					
                 $result[$key] = $value;
             }
 

@@ -16,6 +16,7 @@ class PdoDatabase implements IDatabaseDriver
         $port = 3306;
 
         $dataSource = "$provider:dbname=$database;host=$server;port=$port";
+
         $db = new PDO(
             $dataSource,
             $config['Database']['Username'],
@@ -179,35 +180,21 @@ class PdoDatabase implements IDatabaseDriver
         }
     }
 
-    public function Where($modelCollection, $conditions)
+    public function Where($modelCollection, $conditions, $parameters)
     {
         $result = new Collection();
 
         $tableName = $modelCollection->ModelCache['MetaData']['TableName'];
         $columns = array_keys($modelCollection->ModelCache['Columns']);
 
-        if(!is_array($conditions)){
-            return null;
-        }
-
-        $whereClause = "";
-        foreach($conditions as $key => $value){
-            $whereClause[] = "$key = ?";
-        }
-
-        $whereClause = implode($whereClause," AND ");
-        $sqlStatement = "SELECT * FROM $tableName WHERE $whereClause";
+        $sqlStatement = "SELECT * FROM $tableName WHERE $conditions";
 
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
             echo "Failed to prepare PDO statement";
             var_dump($this->Database->errorInfo());
         }
 
-        foreach($conditions as $value){
-            $params[] = $value;
-        }
-
-        $preparedStatement->execute($params);
+        $preparedStatement->execute($parameters);
 
         $fields = array();
         foreach($columns as $column){
@@ -255,36 +242,45 @@ class PdoDatabase implements IDatabaseDriver
         return $result;
     }
 
-    public function Any($modelCollection, $conditions)
+    public function Any($modelCollection, $conditions, $parameters)
     {
         $tableName = $modelCollection->ModelCache['MetaData']['TableName'];
         $primaryKey = $modelCollection->ModelCache['MetaData']['PrimaryKey'];
 
-        if(!is_array($conditions)){
-            return null;
-        }
-
-        $whereClause = "";
-        foreach($conditions as $key => $value){
-            $whereClause[] = "$key = ?";
-        }
-
-        $whereClause = implode($whereClause," AND ");
-        $sqlStatement = "SELECT count($primaryKey) as RowExists FROM $tableName WHERE $whereClause";
+        $sqlStatement = "SELECT count($primaryKey) as RowExists FROM $tableName WHERE $conditions";
 
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
             echo "Failed to prepare PDO statement";
             var_dump($this->Database->errorInfo());
         }
 
-        foreach($conditions as $value){
-            $params[] = $value;
-        }
-
-        $preparedStatement->execute($params);
+        $preparedStatement->execute($parameters);
         $row = $preparedStatement->fetch();
 
         return $row['RowExists'] != 0;
+    }
+
+    public function Keys($modelCollection)
+    {
+        $result = array();
+
+        $primaryKey = $modelCollection->ModelCache['MetaData']['PrimaryKey'];
+        $tableName = $modelCollection->ModelCache['MetaData']['TableName'];
+
+        $sqlStatement = "SELECT $primaryKey FROM $tableName";
+
+        if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
+        }
+
+        $preparedStatement->execute();
+
+        foreach($preparedStatement as $row){
+            $result[] = $row[$primaryKey];
+        }
+
+        return $result;
     }
 
     public function All($modelCollection)
@@ -342,6 +338,19 @@ class PdoDatabase implements IDatabaseDriver
         $preparedStatement->execute($params);
     }
 
+    public function Clear($modelCollection)
+    {
+        $tableName = $modelCollection->ModelCache['MetaData']['TableName'];
+
+        $sqlStatement = "delete from $tableName";
+        if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->erroInfo);
+        }
+
+        $preparedStatement->execute();
+    }
+
     public function Insert($modelCollection, &$model)
     {
         $tableName = $modelCollection->ModelCache['MetaData']['TableName'];
@@ -358,15 +367,23 @@ class PdoDatabase implements IDatabaseDriver
 
         $values = array();
         foreach($modelCollection->ModelCache['MetaData']['ColumnNames'] as $key){
-            $values[] = $model->$key;
+
+            $value = $model->$key;
+            $values[] = $value;
         }
 
+        /*
         $params = array();
         foreach($values as $key => $value){
-            $params[] = &$values[$key];
+            if($value == '0'){
+                $params[] = null;
+            }else {
+                $params[] = $values[$key];
+            }
         }
+        */
 
-        if(!$preparedStatement->execute($params)){
+        if(!$preparedStatement->execute($values)){
             echo "Failed to execute PDO statement";
             var_dump($this->Database->errorInfo());
         }
@@ -397,7 +414,7 @@ class PdoDatabase implements IDatabaseDriver
         $sqlStatement = "UPDATE $tableName SET $values WHERE $primaryKey=?";
 
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            echo "Failed to execute PDO statement";
+            echo "Failed to prepare PDO statement";
             var_dump($this->Database->errorInfo());
         }
 
@@ -410,10 +427,18 @@ class PdoDatabase implements IDatabaseDriver
 
         $params = array();
         foreach($values as $key => $value){
-            $params[] = $values[$key];
+            echo "$key = $value";
+            if($value == '0'){
+                $params[] = null;
+            }else {
+                $params[] = $values[$key];
+            }
         }
-        $params[] = $id;
 
-        $preparedStatement->execute($params);
+        $params[] = $id;
+        if(!$preparedStatement->execute($params)){
+            echo "Failed to execute PDO statement";
+            var_dump($this->Database->errorInfo());
+        }
     }
 }

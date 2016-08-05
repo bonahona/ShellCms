@@ -1,20 +1,22 @@
 <?php
 define('SERVER_ROOT', str_ireplace('/Index.php', '', $_SERVER['PHP_SELF']));
-define('APPLICATION_ROOT',      $_SERVER['DOCUMENT_ROOT']);
-define('APPLICATION_FOLDER',    '/Application');
-define('CONFIG_FOLDER',         '/Config/');
-define('CONTROLLER_FOLDER',     '/Controllers/');
-define('MODELS_FOLDER',         '/Models/');
-define('PLUGINS_FOLDER',        '/Plugins/');
-define('HELPERS_FOLDER',        '/Helpers/');
-define('VIEWS_FOLDER',          '/Views/');
-define('PARTIAL_FOLDER',        '/Views/Partial/');
-define('LAYOUTS_FOLDER',        '/Views/Layouts');
-define('MODEL_CACHE_FOLDER',    '/Application/Temp/Cache/Models/');
-define('CSS_FOLDER',            '/Content/Css/');
-define('JS_FOLDER',             '/Content/Js/');
-define('IMAGE_FOLDER',          '/Content/Images/');
-define('DATABASE_DRIVER_FOLDER','./ShellLib/DatabaseDrivers/');
+define('APPLICATION_ROOT',          $_SERVER['DOCUMENT_ROOT']);
+define('APPLICATION_FOLDER',        '/Application');
+define('CONFIG_FOLDER',             '/Config/');
+define('CONTROLLER_FOLDER',         '/Controllers/');
+define('MODELS_FOLDER',             '/Models/');
+define('PLUGINS_FOLDER',            '/Plugins/');
+define('HELPERS_FOLDER',            '/Helpers/');
+define('VIEWS_FOLDER',              '/Views/');
+define('PARTIAL_FOLDER',            '/Views/Partial/');
+define('LAYOUTS_FOLDER',            '/Views/Layouts');
+define('MODEL_CACHE_FOLDER',        '/Application/Temp/Cache/Models/');
+define('CSS_FOLDER',                '/Content/Css/');
+define('JS_FOLDER',                 '/Content/Js/');
+define('IMAGE_FOLDER',              '/Content/Images/');
+define('DATABASE_DRIVER_FOLDER',    './ShellLib/DatabaseDrivers/');
+define('LOGGER_FOLDER',             '/Loggers/');
+define('SHELLLIB_LOGGERS_FOLDER',   '/ShellLib/Loggers/');
 
 define('VIEW_FILE_ENDING', '.php');
 define('MODEL_CACHE_FILE_ENDING', '.model');
@@ -94,6 +96,7 @@ class Core
     protected $CssFolder;
     protected $JsFolder;
     protected $ImageFolder;
+    protected $LoggerFolder;
 
     public function GetIsPrimaryCore()
     {
@@ -213,9 +216,14 @@ class Core
             $this->ModelHelper = new ModelHelper();
 
             $this->SetupFolders();
+
             if(!$this->ReadConfig()){
                 trigger_error("Failed to read ApplicationConfig", E_USER_ERROR);trigger_error("Failed to read ApplicationConfig", E_USER_ERROR);
             }
+
+            $this->Logging = new Logging();
+            $this->FindShellLibLoggers();
+            $this->FindLoggers($this->LoggerFolder);
 
             $this->Helpers = new Helpers();
             $this->SetupHelpers();
@@ -232,9 +240,14 @@ class Core
             $this->PrimaryCore = $primaryCore;
 
             $this->SetupPluginFolders();
-            $this->ReadPluginConfig();
-            $this->CacheModels();
             $this->Logging = $primaryCore->GetLogging();
+            $this->FindLoggers($this->LoggerFolder);
+
+            $this->ReadPluginConfig();
+
+            $this->FindLoggers($this->LoggerFolder);
+
+            $this->CacheModels();
             $this->Database = $primaryCore->GetDatabase();
             $this->Helpers = $primaryCore->GetHelpers();
             $this->SetupHelpers();
@@ -259,6 +272,7 @@ class Core
         $this->CssFolder = SERVER_ROOT . APPLICATION_FOLDER . CSS_FOLDER;
         $this->JsFolder = SERVER_ROOT . APPLICATION_FOLDER . JS_FOLDER;
         $this->ImageFolder = SERVER_ROOT . APPLICATION_FOLDER . IMAGE_FOLDER;
+        $this->LoggerFolder = APPLICATION_FOLDER . LOGGER_FOLDER;
     }
 
     protected function SetupPluginFolders()
@@ -273,6 +287,7 @@ class Core
         $this->CssFolder =  $this->PluginPath . CSS_FOLDER;
         $this->JsFolder =  $this->PluginPath . JS_FOLDER;
         $this->ImageFolder =  $this->PluginPath . IMAGE_FOLDER;
+        $this->LoggerFolder = $this->PluginPath . LOGGER_FOLDER;
     }
 
     protected function ReadConfig()
@@ -305,7 +320,6 @@ class Core
 
     protected function SetupLogs()
     {
-        $this->Logging = new Logging();
         if(!$this->Logging->SetupLoggers($this->ApplicationConfig)){
             trigger_error("Failed to setup logging", E_USER_ERROR);
         }
@@ -362,6 +376,32 @@ class Core
         return $dieOnRoutingError;
     }
 
+    // Find the logger classes available in the default shell lib folders
+    protected  function FindShellLibLoggers()
+    {
+        $shellLibLoggerFolder = Directory(SHELLLIB_LOGGERS_FOLDER);
+
+        $loggerFiles = GetAllFiles($shellLibLoggerFolder);
+        foreach($loggerFiles as $loggerFile){
+            $this->GetLogging()->AddAvailableLogger($loggerFile, $shellLibLoggerFolder . $loggerFile);
+        }
+    }
+
+    // Find loggers distributed in the application folder or in plugins
+    protected  function FindLoggers($loggerDirectoryName)
+    {
+        $loggerDirectory = Directory($loggerDirectoryName);
+        // If the folder does not exists, what's the point of looking through it?
+        if(!is_dir($loggerDirectory)){
+            return;
+        }
+
+        $loggerFiles = GetAllFiles($loggerDirectory);
+        foreach($loggerFiles as $loggerFile){
+            $this->GetLogging()->AddAvailableLogger($loggerFile, $loggerDirectory . $loggerFile);
+        }
+    }
+
     // Iterates over each model to make sure they are cached
     protected function CacheModels()
     {
@@ -370,6 +410,7 @@ class Core
 
         // Make sure the model folder exists
         $modelCacheFolder = Directory($this->ModelFolder);
+
         if(!is_dir($modelCacheFolder)){
             mkdir($modelCacheFolder, 777, true);
         }
@@ -574,6 +615,7 @@ class Core
         $controller->RequestUri     = $requestData['RequestUri'];
         $controller->RequestString  = $requestData['RequestString'];
         $controller->Helpers        = $this->Helpers;
+        $controller->Logging        = $this->Logging;
         $controller->Helpers->SetCurrentController($controller);
 
         return array(

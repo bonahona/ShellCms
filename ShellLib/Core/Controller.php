@@ -20,6 +20,7 @@ class Controller
     public $CurrentCore;                // Should usually be the same one as the Core, bit might, during rendering, be set to some other one for resource purposes
     public $Config;
     public $Helpers;                    // Reference the main core's helpers list
+    public $Logging;
 
     // Data sent
     public $Post;                       // Stores all Post data variables sent in
@@ -97,7 +98,7 @@ class Controller
         $partialViewName = PartialViewPath($this->Core, $viewName);
 
         if(!file_exists($partialViewName)){
-            die('Partial view missing ' . $partialViewName);
+            trigger_error('Partial view missing ' . $partialViewName, E_USER_ERROR);
         }
 
         if($partialViewVars != null){
@@ -106,7 +107,7 @@ class Controller
                     $$key = $var;
                 }
             }else{
-                die('$PartialViewVars is not an array');
+                trigger_error('$PartialViewVars is not an array', E_USER_ERROR);
             }
         }
         include($partialViewName);

@@ -17,9 +17,11 @@ class Controller
     public $Html;
     public $ModelValidation;
     public $Core;                       // Main core for this controller
-    public $CurrentCore;                // Should usually be the same one as the Core, bit might, during rendering, be set to some other one for resource purposes
+    public $CurrentCore;                // Should usually be the same one as the Core, but might during rendering, be set to some other one for resource purposes
     public $Config;
     public $Helpers;                    // Reference the main core's helpers list
+    public $Logging;
+    public $Cache;                      // Reference to the Core's cache object
 
     // Data sent
     public $Post;                       // Stores all Post data variables sent in
@@ -97,7 +99,7 @@ class Controller
         $partialViewName = PartialViewPath($this->Core, $viewName);
 
         if(!file_exists($partialViewName)){
-            die('Partial view missing ' . $partialViewName);
+            trigger_error('Partial view missing ' . $partialViewName, E_USER_ERROR);
         }
 
         if($partialViewVars != null){
@@ -106,7 +108,7 @@ class Controller
                     $$key = $var;
                 }
             }else{
-                die('$PartialViewVars is not an array');
+                trigger_error('$PartialViewVars is not an array', E_USER_ERROR);
             }
         }
         include($partialViewName);
@@ -122,7 +124,7 @@ class Controller
         // Make sure the view exists
         $viewPath = ViewPath($this->Core, $this->Controller, $viewName);
         if(!file_exists($viewPath)) {
-            die('Could not find view ' . $viewPath);
+            trigger_error('Could not find view ' . $viewPath, E_USER_ERROR);
         }
 
         // Enable all the the view variables to be available in the view

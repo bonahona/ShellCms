@@ -92,7 +92,8 @@ class DataHelper implements Iterator, Countable, ArrayAccess
 
             return $result;
         }else{
-            die("Cannot parse element");
+            trigger_error("Cannot parse element $element", E_USER_WARNING);
+            return null;
         }
     }
 
@@ -112,9 +113,9 @@ class DataHelper implements Iterator, Countable, ArrayAccess
             return $result;
 
         }else{
-            die("Cannot raw parse element");
+            trigger_error("Cannot parse element $element", E_USER_WARNING);
+            return null;
         }
-
     }
 
     public function DbParse($element, $model)

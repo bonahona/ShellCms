@@ -111,7 +111,7 @@ class ScriptCore
 
             $this->SetupFolders();
             if(!$this->ReadConfig()){
-                die("Failed to read Database Config");
+                trigger_error('Failed to read Database config', E_USER_WARNING);
             }
 
             $this->SetupDatabase();
@@ -176,7 +176,7 @@ class ScriptCore
                 require_once($databaseProviderPath);
                 $this->Database = new PdoDatabase($this, $this->DatabaseConfig);
             }else{
-                die("Unknown database provider type: $databaseType");
+                trigger_error("Unknown or unsupportet database provider found in database config: $databaseType", E_USER_ERROR);
             }
         }
     }

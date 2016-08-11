@@ -15,7 +15,7 @@ class Models
         if(array_key_exists($modelName, $this->ModelCollections)){
             return $this->ModelCollections[$modelName];
         }else{
-            die("Model $modelName does not exists");
+            trigger_error("Model $modelName does not exists", E_USER_ERROR);
         }
     }
 

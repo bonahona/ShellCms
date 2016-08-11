@@ -188,4 +188,13 @@ class Model
             return $columnName + 'Object';
         }
     }
+
+    public function ConvertZeroToNull()
+    {
+        foreach($this->Properties as $key => $property){
+            if($property === 0 || $property === '0'){
+                $this->$key = null;
+            }
+        }
+    }
 }

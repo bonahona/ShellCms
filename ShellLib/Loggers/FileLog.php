@@ -1,5 +1,5 @@
 <?php
-class FileLog extends Log
+class FileLog implements ILog
 {
     public $FileHandle;
 

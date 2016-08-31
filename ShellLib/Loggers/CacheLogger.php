@@ -2,7 +2,7 @@
 // The cache logger does not write its log to any specific place but only stores it in memory until the end of execution.
 // The fetch method can e used to get an array of all the log entries that has been entered
 // This logger is used to avoid the usage of var_dumps thatputs content directly ito the file stream. Instead, create a CacheLogger and write all var_dumps to it. Later, get them with Fetch();
-class CacheLogger extends Log
+class CacheLogger implements  ILog
 {
     protected $LogEntries;
 

@@ -9,9 +9,13 @@ define('LOGGING_FETCH_ALL', 0);       // Not a valid flag when writing to the lo
 
 class Logging
 {
+    /* @var array*/
     protected  $AvailableLoggers;
 
+    /* @var ILog */
     protected $DefaultLogger;
+
+    /* @var array */
     protected $Loggers;
 
     function __construct()
@@ -104,12 +108,14 @@ class Logging
         );
     }
 
+    /* @return ILog */
     public function __get($loggerName)
     {
         if(array_key_exists($loggerName, $this->Loggers)){
             return $this->Loggers[$loggerName];
         }else{
             trigger_error('Logger with name ' . $loggerName . ' is not setup in the application config', E_USER_ERROR);
+            return null;
         }
     }
 

@@ -1,8 +1,8 @@
 <?php
 
 // Base class for implementation of logging files
-class Log
+interface ILog
 {
-    public function Setup($config){}
-    public function Write($data, $logLevel = LOGGING_NOTICE){}
+    public function Setup($config);
+    public function Write($data, $logLevel = LOGGING_NOTICE);
 }

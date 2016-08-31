@@ -34,6 +34,9 @@ require_once('/../../ShellLib/Utility/StringUtilities.php');
 */
 class ScriptCore
 {
+    // Overrides some config
+    protected  $IgnoreDatabase = false;
+
     public static $Instance;
 
     protected $DatabaseConfig;          // Server information and credentials to the database to use (if any).
@@ -165,6 +168,11 @@ class ScriptCore
         if(!empty($this->DatabaseConfig)) {
 
             $databaseType = $this->DatabaseConfig['Database']['DatabaseType'];
+
+            // Override the usedatabase config flag
+            if($this->IgnoreDatabase){
+                $this->DatabaseConfig['Database']['UseDatabase'] = false;
+            }
 
             // Handle the provider types given
             if($databaseType == 'MySqli'){

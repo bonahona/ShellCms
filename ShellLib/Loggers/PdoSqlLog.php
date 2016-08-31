@@ -1,5 +1,5 @@
 <?php
-class PdoSqlLog extends Log
+class PdoSqlLog implements ILog
 {
     protected $Database;
     protected $TableName;

@@ -74,6 +74,7 @@ class DataHelper implements Iterator, Countable, ArrayAccess
     }
 
     // Parses the requests element found in the post/get data to the desired model. Will ignore any data extra data the model does not contain.
+    /* @return Model */
     public function Parse($element, $model)
     {
         if(isset($this->m_items[$element])){
@@ -98,6 +99,7 @@ class DataHelper implements Iterator, Countable, ArrayAccess
     }
 
     // Parses the element to a non savable custom array. Includes all data found in the form
+    /* @return array() */
     public function RawParse($element)
     {
         if(isset($this->m_items[$element])){
@@ -118,6 +120,7 @@ class DataHelper implements Iterator, Countable, ArrayAccess
         }
     }
 
+    /* @return Model */
     public function DbParse($element, $model)
     {
         if (isset($this->m_items[$element])) {
@@ -143,6 +146,7 @@ class DataHelper implements Iterator, Countable, ArrayAccess
         }
     }
 
+    /* @return bool */
     public function IsEmpty()
     {
         return empty($this->m_items);

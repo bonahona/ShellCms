@@ -103,26 +103,26 @@ class Controller
         $this->Session = new SessionHelper();
     }
 
-    public function GetCore()
+    protected  function GetCore()
     {
         return $this->Core;
     }
 
-    public function GetCurrentCore()
+    protected function GetCurrentCore()
     {
         return $this->CurrentCore;
     }
 
-    public function &GetViewData()
+    protected function &GetViewData()
     {
         return $this->ViewData;
     }
 
-    public function IsPost(){
+    protected function IsPost(){
         return ($this->Verb == "POST");
     }
 
-    public function IsGet()
+    protected function IsGet()
     {
         return ($this->Verb == "GET");
     }
@@ -288,17 +288,17 @@ class Controller
         return $layoutPath;
     }
 
-    public function SetLoggedInUser($user)
+    protected function SetLoggedInUser($user)
     {
         $this->Session['CurrentUser'] = $user;
     }
 
-    public function LogoutCurrentUser()
+    protected function LogoutCurrentUser()
     {
         $this->Session->Destroy();
     }
 
-    public function IsLoggedIn()
+    protected function IsLoggedIn()
     {
         if(isset($this->Session['CurrentUser'])){
             return true;
@@ -307,7 +307,7 @@ class Controller
         }
     }
 
-    public function GetCurrentUser()
+    protected function GetCurrentUser()
     {
         if(isset($this->Session['CurrentUser'])){
             return $this->Session['CurrentUser'];
@@ -321,30 +321,30 @@ class Controller
     }
 
     // Function is called after the action but before the page is rendered
-    public function BeforeRender(){
+    protected function BeforeRender(){
         header('Content-Type: ' . $this->MimeType);
     }
 
     // Adds a request identifier to the list of cached output for automatic output cache handling
-    public function EnableOutputCacheFor($requestData, $validity)
+    protected function EnableOutputCacheFor($requestData, $validity)
     {
 
     }
 
     // Manual adding of an output cache entry or updates an existing one
-    public function AddOutputCache($requestData, $output, $validity)
+    protected function AddOutputCache($requestData, $output, $validity)
     {
 
     }
 
     // Manual invalidation
-    public function InvalidateOutputCache($requestData)
+    protected function InvalidateOutputCache($requestData)
     {
 
     }
 
     // Manual check for a cache entry
-    public function IsOutputCached($requestData)
+    protected function IsOutputCached($requestData)
     {
 
     }

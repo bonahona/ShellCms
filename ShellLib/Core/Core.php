@@ -620,6 +620,15 @@ class Core
             );
         }
 
+
+        $publicMethods = get_class_methods($controllerClassName);
+        if(!in_array($actionName, $publicMethods)){
+            return array(
+                'error' => 1,
+                'message' => 'Called action is not public'
+            );
+        }
+
         $controller->Core           = $controllerPath['core'];
         $controller->CurrentCore    = $controllerPath['core'];
         $controller->Config         = $controllerPath['core']->GetApplicationConfig();

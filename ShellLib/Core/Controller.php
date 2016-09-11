@@ -103,17 +103,17 @@ class Controller
         $this->Session = new SessionHelper();
     }
 
-    protected  function GetCore()
+    public  function GetCore()
     {
         return $this->Core;
     }
 
-    protected function GetCurrentCore()
+    public function GetCurrentCore()
     {
         return $this->CurrentCore;
     }
 
-    protected function &GetViewData()
+    public function &GetViewData()
     {
         return $this->ViewData;
     }
@@ -288,17 +288,17 @@ class Controller
         return $layoutPath;
     }
 
-    protected function SetLoggedInUser($user)
+    public function SetLoggedInUser($user)
     {
         $this->Session['CurrentUser'] = $user;
     }
 
-    protected function LogoutCurrentUser()
+    public function LogoutCurrentUser()
     {
         $this->Session->Destroy();
     }
 
-    protected function IsLoggedIn()
+    public function IsLoggedIn()
     {
         if(isset($this->Session['CurrentUser'])){
             return true;

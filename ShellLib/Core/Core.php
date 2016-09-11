@@ -39,6 +39,7 @@ require_once('./ShellLib/Core/IDatabaseDriver.php');
 require_once('./ShellLib/Core/Models.php');
 require_once('./ShellLib/Core/Helpers.php');
 require_once('./ShellLib/Core/IHelper.php');
+require_once ('./ShellLib/Core/Routing.php');
 require_once('./ShellLib/Core/DatabaseWhereCondition.php');
 require_once('./ShellLib/Core/CustomObjectSorter.php');
 require_once('./ShellLib/Files/File.php');
@@ -80,6 +81,7 @@ class Core
     protected $Helpers;
     protected $ModelHelper;
     protected $RequestUrl;
+    protected $RequestString;
     protected $Database;
     protected $Controller;
 
@@ -489,14 +491,24 @@ class Core
     {
         // Find the current request folder
         $requestRoot = $_SERVER['SCRIPT_NAME'];
-        $requestUrl = $_SERVER['REQUEST_URI'];
+        $this->RequestString = $_SERVER['REQUEST_URI'];
+        $this->RequestUrl = $this->FixRequestUrl($this->RequestString);
 
-        $requestData = $this->ParseUrl($requestRoot, $requestUrl);
-        $controllerName = $requestData['ControllerName'];
-        $actionName = $requestData['ActionName'];
-        $variables = $requestData['Variables'];
+        $routingEngine = new Routing($this->RoutesConfig);
+        $requestData = $routingEngine->ParseUrl($requestRoot, $this->RequestUrl);
 
-        $handler = $this->CreateHandler($controllerName, $actionName, $requestData);
+        if($requestData != null) {
+            $controllerName = $requestData['ControllerName'];
+            $actionName     = $requestData['ActionName'];
+            $variables      = $requestData['Variables'];
+
+            $handler = $this->CreateHandler($controllerName, $actionName, $requestData);
+        }else{
+            $handler = array(
+                'error' => 1,
+                'message' => 'Routing engine could not map request to a configured route'
+            );
+        }
 
         // The controller or the action does not exists. If debugging is on, die and give an error, otherwise reroute to the notFound route
         if($handler['error'] == 1){
@@ -506,7 +518,7 @@ class Core
             }else{
                 $notFoundHandler = $this->CreateNotFoundHandler($requestData);
 
-                // If the not found handler, there is not much to do
+                // If the not found handler is not found or has en error, there is not much to do
                 if($notFoundHandler['error'] == 1){
                     trigger_error('NotFoundHandler: ' . $notFoundHandler['message'], E_USER_ERROR);
                 }
@@ -548,6 +560,20 @@ class Core
         $this->Database->Close();
     }
 
+    // Takes the raw request url and makes sure it follows the expected format
+    public function FixRequestUrl($requestUrl)
+    {
+        // If there is a query part of the request url, remove it
+        if(strpos($requestUrl, '?') !== false) {
+            $requestUrl = substr($requestUrl,0,strpos($requestUrl, '?'));
+        }
+
+        // Made sure the request url is valid with a trailing slash
+        $requestUrl = rtrim($requestUrl, '/') . '/';
+
+        return $requestUrl;
+    }
+
     public function GetControllerPath($controllerName, $requestData)
     {
         $usedCore = $this;
@@ -587,6 +613,17 @@ class Core
         }
     }
 
+    public function GetDeclaredMethods($className) {
+        $reflector = new ReflectionClass($className);
+        $methodNames = array();
+        foreach ($reflector->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            if ($method->class === $className) {
+                $methodNames[] = $method->name;
+            }
+        }
+        return $methodNames;
+    }
+
     public function CreateHandler($controllerName, $actionName, $requestData)
     {
         // Find the controller to use
@@ -620,12 +657,11 @@ class Core
             );
         }
 
-
-        $publicMethods = get_class_methods($controllerClassName);
+        $publicMethods = $this->GetDeclaredMethods($controllerClassName);
         if(!in_array($actionName, $publicMethods)){
             return array(
                 'error' => 1,
-                'message' => 'Called action is not public'
+                'message' => 'Called action is not public is does not exists'
             );
         }
 
@@ -636,8 +672,8 @@ class Core
         $controller->Controller     = $controllerName;
         $controller->Layout         = $this->ApplicationConfig['Application']['DefaultLayout'];
         $controller->Models         = $this->Models;
-        $controller->RequestUri     = $requestData['RequestUri'];
-        $controller->RequestString  = $requestData['RequestString'];
+        $controller->RequestUri     = $this->RequestUrl;
+        $controller->RequestString  = $this->RequestString;
         $controller->Parameters     = $requestData['Variables'];
         $controller->Helpers        = $this->Helpers;
         $controller->Logging        = $this->Logging;
@@ -670,83 +706,6 @@ class Core
         $notFoundAction = $this->ApplicationConfig['Application']['NotFoundAction'];
 
         return $this->CreateHandler($notFoundControllerName, $notFoundAction, $requestData);
-    }
-
-    protected function ParseUrl($requestRoot, $requestUrl)
-    {
-        $requestString = $requestUrl;
-
-        // If there is a query part of the request url, remove it
-        if(strpos($requestUrl, '?') !== false) {
-            $requestUrl = substr($requestUrl,0,strpos($requestUrl, '?'));
-        }
-
-        // Made sure the request url is valid with a trailing slash
-        $requestUrl = rtrim($requestUrl, '/') . '/';
-
-        // First, go trough the routes in the config and see if there is a route overriding the default routing
-        foreach($this->RoutesConfig['Routes'] as $route => $routeData) {
-            if (strcasecmp($route, $requestUrl) == 0) {
-                return array(
-                    'ControllerName' => $routeData['Controller'],
-                    'ActionName' => $routeData['Action'],
-                    'Variables' => array(),
-                    'RequestUri' => $requestUrl,
-                    'RequestString' => $requestString
-
-                );
-            }
-        }
-
-        $requestPath = explode('/', $requestRoot);
-
-        // Remove only the last part of the string
-        $requestRoot = str_replace(end($requestPath), '', $requestRoot);
-
-
-        // If the request root is the root, there's nothing to clear out
-        if($requestRoot != '/') {
-            $requestResource = str_replace($requestRoot, '', $requestUrl);
-        }else{
-            $requestResource = $requestUrl;
-        }
-
-        $this->RequestUrl = $requestUrl;
-
-        $requestParameters = explode('/', $requestResource);
-
-        // Check if a specific controller has been specified
-        if(!empty($requestParameters[1])){
-            $controllerName = $requestParameters[1];
-        }else{
-            $controllerName = $this->ApplicationConfig['Application']['DefaultController'];
-        }
-
-        // Find if a specific action has been specified
-        if(!empty($requestParameters[2])){
-            $actionName = $requestParameters[2];
-        }else{
-            $actionName = $this->ApplicationConfig['Application']['DefaultAction'];
-        }
-
-        // Go through the rest of the parameters to filter out the variables
-        $variables = array();
-        foreach($requestParameters as $key => $parameter){
-            // The first 3 are not used as variables
-            if($key != 0 && $key != 1 && $key != 2){
-                if($parameter != '') {
-                    $variables[] = $parameter;
-                }
-            }
-        }
-
-        return array(
-            'ControllerName' => $controllerName,
-            'ActionName' => $actionName,
-            'Variables' => $variables,
-            'RequestUri' => $requestUrl,
-            'RequestString' => $requestString
-        );
     }
 
     function ParseData($controller)

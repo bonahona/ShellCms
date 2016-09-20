@@ -363,6 +363,34 @@ class Core
         }
     }
 
+    protected  function ApplicationCapitalizeControllerName()
+    {
+        $result = false;
+        if($this->ApplicationConfig !== false) {
+            if (array_key_exists('Application', $this->ApplicationConfig)) {
+                if (array_key_exists('CapitalizeControllerName', $this->ApplicationConfig['Application'])) {
+                    $result = $this->ApplicationConfig['Application']['CapitalizeControllerName'];
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    protected  function ApplicationCapitalizeActionName()
+    {
+        $result = false;
+        if($this->ApplicationConfig !== false) {
+            if (array_key_exists('Application', $this->ApplicationConfig)) {
+                if (array_key_exists('CapitalizeActionName', $this->ApplicationConfig['Application'])) {
+                    $result = $this->ApplicationConfig['Application']['CapitalizeActionName'];
+                }
+            }
+        }
+
+        return $result;
+    }
+
     protected function DebugDontCacheModels()
     {
         // Read debug data from the log
@@ -501,6 +529,14 @@ class Core
             $controllerName = $requestData['ControllerName'];
             $actionName     = $requestData['ActionName'];
             $variables      = $requestData['Variables'];
+
+            if($this->ApplicationCapitalizeControllerName()){
+                $controllerName = ucfirst($controllerName);
+            }
+
+            if($this->ApplicationCapitalizeActionName()){
+                $actionName = ucfirst($actionName);
+            }
 
             $handler = $this->CreateHandler($controllerName, $actionName, $requestData);
         }else{

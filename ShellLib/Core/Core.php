@@ -566,6 +566,7 @@ class Core
             $controller = $handler['controller'];
         }
 
+        $this->UpdateNonces();
         $this->ParseData($controller);
 
         // Call the action
@@ -758,7 +759,11 @@ class Core
                         $controller->Post->Add($subKey, $subValue);
                         $controller->Data->Add($subKey, $subValue);
                     }
-                }else {
+                } else if($key == 'nonce') {
+                    foreach($_POST['nonce'] as $subKey => $subValue){
+                        $controller->Nonces[$subKey] = $subValue;
+                    }
+                } else {
                     $controller->Post->Add($key, $value);
                     $controller->Data->Add($key, $value);
                 }
@@ -809,6 +814,20 @@ class Core
                         $controller->Files[$key] = $storedFile;
                     }
                 }
+            }
+        }
+    }
+
+    public function UpdateNonces()
+    {
+        if(!isset($_SESSION['Nonces'])){
+            $_SESSION['Engine']['Nonces'] = array();
+        }
+
+        foreach($_SESSION['Nonces'] as $key => $nonce){
+            $nonce['Ttl'] = $nonce['Ttl'] -1;
+            if($nonce['Ttl'] < 0){
+                unset($_SESSION['Nonces'][$key]);
             }
         }
     }

@@ -1,9 +1,14 @@
 <?php
-require_once('ShellLib/Logging/Log.php');
+require_once('ShellLib/Logging/ILog.php');
 
-define('LOGGING_FATAL', 0);
-define('LOGGING_WARNING', 1);
-define('LOGGING_NOTICE', 2);
+define('LOGGING_EMERGENCY', 0);
+define('LOGGING_ALERT', 1);
+define('LOGGING_CRITICAL', 2);
+define('LOGGING_ERROR', 3);
+define('LOGGING_WARNING', 4);
+define('LOGGING_NOTICE', 5);
+define('LOGGING_INFO', 6);
+define('LOGGING_DEBUG', 7);
 
 define('LOGGING_FETCH_ALL', 0);       // Not a valid flag when writing to the log, but allowed when fetching messages based on their level
 
@@ -100,7 +105,7 @@ class Logging
         }
 
         $logger = new $type;
-        $logger->Setup($config);
+        $logger->Setup($config, $this);
 
         return array(
             'Error' => 0,
@@ -120,12 +125,26 @@ class Logging
     }
 
     // Wrapper for using the default logger
-    public function Write($data, $loggingLevel = LOGGING_NOTICE)
+    public function Log($data, $loggingLevel = LOGGING_NOTICE)
     {
         if($this->DefaultLogger == null){
             trigger_error('No logger is setup is the application config', E_USER_ERROR);
         }
 
-        $this->DefaultLogger->Write($data, $loggingLevel);
+        $this->DefaultLogger->Log($data, $loggingLevel);
+    }
+
+    // Takes a message and replaces placeholders with values from the context
+    public function Interpolate($message, $context)
+    {
+        $replace = array();
+        foreach ($context as $key => $val) {
+            if (!is_array($val) && (!is_object($val) || method_exists($val, '__toString'))) {
+                $replace['{' . $key . '}'] = $val;
+            }
+        }
+
+        $result = strtr($message, $replace);
+        return $result;
     }
 }

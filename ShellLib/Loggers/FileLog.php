@@ -1,10 +1,13 @@
 <?php
 class FileLog implements ILog
 {
-    public $FileHandle;
+    /* @var Logging */
+    protected $Logging;         // Reference back to the logging instance for shared functionality
+    protected $FileHandle;
 
-    public function Setup($config)
+    public function Setup($config, $logging)
     {
+        $this->Logging = $logging;
         $this->FileHandle = null;
 
         if(!isset($config['Name'])){
@@ -31,16 +34,55 @@ class FileLog implements ILog
 
         // Create the file for writing with append in mind. The pointer of the fle will be at the end of its current context
         $this->FileHandle = fopen($fileName, 'a');
-
-
     }
 
-    public function Write($data, $logLevel = LOGGING_NOTICE)
+    public function Log($message, $context = array(), $logLevel = LOGGING_NOTICE)
     {
         if($this->FileHandle === null || $this->FileHandle === false){
             return;
         }
 
-        fwrite($this->FileHandle, $data . '\r\n');
+        $message = $logLevel . ': ' . $this->Logging->Interpolate($message,  $context);
+        fwrite($this->FileHandle, $message . '\r\n');
+    }
+
+    public function Emergency($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_EMERGENCY);
+    }
+
+    public function Alert($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_ALERT);
+    }
+
+    public function Critical($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_CRITICAL);
+    }
+
+    public function Error($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_ERROR);
+    }
+
+    public function Warning($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_WARNING);
+    }
+
+    public function Notice($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_NOTICE);
+    }
+
+    public function Info($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_INFO);
+    }
+
+    public function Debug($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_DEBUG);
     }
 }

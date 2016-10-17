@@ -77,6 +77,9 @@ class Controller
     /* @var string */
     public $Server = array();           // Stores all server variables
 
+    /* @var array */
+    public $Nonces = array();           // Nonce values fetched from the post data
+
     // Response data
     public $ReturnCode;
     public $MimeType;
@@ -323,6 +326,41 @@ class Controller
     // Function is called after the action but before the page is rendered
     protected function BeforeRender(){
         header('Content-Type: ' . $this->MimeType);
+    }
+
+    // CSRF protection using Nonces
+    public function GenerateNonce($formName, $ttl = 1){
+        $nonceValue = uniqid('', true);
+
+        if(!isset($_SESSION['Nonces'])){
+            $_SESSION['Engine']['Nonces'] = array();
+        }
+
+        $_SESSION['Nonces'][$formName] = array(
+            'Value' => $nonceValue,
+            'Ttl' => $ttl
+        );
+
+        return $nonceValue;
+    }
+
+    public function ValidateNonce($formName){
+        if(isset($_SESSION['Nonces']) && isset($_SESSION['Nonces'][$formName])){
+
+            $nonceEntry = $_SESSION['Nonces'][$formName];
+            $nonceValue = "";
+            if(isset($this->Nonces[$formName])){
+                $nonceValue = $this->Nonces[$formName];
+            }
+
+            if($nonceEntry['Value'] == $nonceValue){
+                return true;
+            }else{
+                return false;
+            }
+        }else{
+            return false;
+        }
     }
 
     // Adds a request identifier to the list of cached output for automatic output cache handling

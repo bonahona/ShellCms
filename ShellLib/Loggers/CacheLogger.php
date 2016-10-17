@@ -4,19 +4,65 @@
 // This logger is used to avoid the usage of var_dumps thatputs content directly ito the file stream. Instead, create a CacheLogger and write all var_dumps to it. Later, get them with Fetch();
 class CacheLogger implements  ILog
 {
+    /* @var Logging */
+    protected $Logging;         // Reference back to the logging instance for shared functionality
+
+    /*@var array */
     protected $LogEntries;
 
-    public function Setup($config)
+    public function Setup($config, $logging)
     {
+        $this->Logging = $logging;
         $this->LogEntries = array();
     }
 
-    public function Write($data, $logLevel = LOGGING_NOTICE)
+    public function Log($message, $context = array(), $logLevel = LOGGING_NOTICE)
     {
         $this->LogEntries[] = array(
-            'Data' => $data,
+            'Data' => $this->Logging->Interpolate($message),
+            'Context' => $context,
             'Level' => $logLevel
         );
+    }
+
+    public function Emergency($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_EMERGENCY);
+    }
+
+    public function Alert($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_ALERT);
+    }
+
+    public function Critical($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_CRITICAL);
+    }
+
+    public function Error($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_ERROR);
+    }
+
+    public function Warning($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_WARNING);
+    }
+
+    public function Notice($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_NOTICE);
+    }
+
+    public function Info($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_INFO);
+    }
+
+    public function Debug($message, $context = array())
+    {
+        $this->Log($message, $context, LOGGING_DEBUG);
     }
 
     public function Fetch()

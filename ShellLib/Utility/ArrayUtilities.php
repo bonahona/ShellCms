@@ -9,3 +9,16 @@ function ArrayKeyExistsCaseInsensitive($needle, $haystack)
 
     return false;
 }
+
+function First($collection)
+{
+    if(!is_array($collection)){
+        return null;
+    }
+
+    if(count($collection) > 0){
+        return $collection[0];
+    }else{
+        return null;
+    }
+}

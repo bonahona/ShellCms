@@ -1,27 +1,59 @@
 <?php
 class SqlCollection implements IDataCollection
 {
+    /* @var SqlChainedQueryHelper */
+    public $ChainedQueryData;               // Stores data to help build the SQL query later on
+
+    /* @var ICollection */
+    private $m_queryCache;                  // Wen the combined query is executed, the resulting item is stored here
+
+    /* @var int */
+    private $m_position;                    // Internally used when iterating
+
     public function __construct()
     {
-        $this->m_position = 0;
-        $this->m_items = array();
+        $this->m_queryCache = null;
+    }
+
+    protected function GetItems()
+    {
+        if($this->m_queryCache == null){
+            $this->m_queryCache = $this->ExecuteQuery();
+        }
+
+        return $this->m_queryCache;
+    }
+
+    /* @return ICollection */
+    protected function ExecuteQuery()
+    {
+        $sqlStatement = $this->GetSqlQuery();
+    }
+
+    /* @return string*/
+    protected  function GetSqlQuery()
+    {
+        return "";
     }
 
     public function Copy($items)
     {
+        $this->m_queryCache = new Collection();
         foreach($items as $item){
-            $this->Add($item);
+            $this->m_queryCache->Add($item);
         }
     }
 
     function rewind()
     {
+        $queryCache = $this->GetItems();
         $this->m_position = 0;
+        $queryCache->rewind;
     }
 
     function current()
     {
-        return $this->m_items[$this->m_position];
+        return $this->m_queryCache[$this->m_position];
     }
 
     function key()
@@ -36,162 +68,69 @@ class SqlCollection implements IDataCollection
 
     function valid()
     {
-        return isset($this->m_items[$this->m_position]);
+        $queryCache = $this->GetItems();
+        return isset($queryCache[$this->m_position]);
     }
 
     function count()
     {
-        return count($this->m_items);
+        $queryCache = $this->GetItems();
+        return count($queryCache);
     }
 
     public function Keys()
     {
-        return array_keys($this->m_items);
+        $queryCache = $this->GetItems();
+        return $queryCache->Keys();
     }
 
     public function Add($item)
     {
-        $this->m_items[] = $item;
+        trigger_error('Add not allowed on SqlColletions', E_USER_ERROR);
     }
 
     public function OrderBy($field)
     {
-        $tmpArray = $this->m_items;
-        $this->quickSort($tmpArray, $field);
-
-        $result = new Collection();
-        $result->Copy($this->m_items);
-
-        return $result;
+        $this->ChainedQueryData->OrderByColumn = $field;
+        return $this;
     }
 
     public function OrderByDescending($field)
     {
-
+        trigger_error('Not implemented', E_USER_ERROR);
     }
 
     public function Where($conditions)
     {
-        $result = new Collection();
-
-        foreach($this->m_items as $item){
-            if($this->CheckConditions($conditions, $item)){
-                $result->Add($item);
-            }
-        }
-
-        return $result;
+        $this->ChainedQueryData->WhereClause = $conditions;
+        return $this;
     }
 
     public function Any($conditions)
     {
-        foreach($this->m_items as $item){
-            if($this->CheckConditions($conditions, $item)){
-                return result;
-            }
-        }
+        $this->ChainedQueryData->WhereClause = $conditions;
+        $queryCache = $this->GetItems();
 
-        return false;
+        if(count($queryCache) > 0){
+            return true;
+        } else{
+            return false;
+        }
     }
 
     public function Take($count)
     {
-        $result = new Collection();
-
-        $currentCount = 0;
-        foreach($this->m_items as $item){
-            $result->Add($item);
-            $currentCount ++;
-
-            if($currentCount == $count){
-                break;
-            }
-        }
-
-        return $result;
-    }
-
-    private function CheckConditions($conditions, $item)
-    {
-        if(!is_array($conditions)){
-            return false;
-        }else {
-
-            foreach($conditions as $key => $value){
-                if($item->$key != $value){
-                    return false;
-                }
-            }
-
-            // Nothing failed this conditions check
-            return true;
-        }
-    }
-
-    // Taken from http://stackoverflow.com/questions/1462503/sort-array-by-object-property-in-php
-    private function quickSort(&$array, $field)
-    {
-        if(count($array) == 0){
-            return;
-        }
-
-        $cur = 1;
-        $stack[1]['l'] = 0;
-        $stack[1]['r'] = count($array)-1;
-
-        do
-        {
-            $l = $stack[$cur]['l'];
-            $r = $stack[$cur]['r'];
-            $cur--;
-
-            do
-            {
-                $i = $l;
-                $j = $r;
-                $tmp = $array[(int)( ($l+$r)/2 )];
-
-                // partion the array in two parts.
-                // left from $tmp are with smaller values,
-                // right from $tmp are with bigger ones
-                do
-                {
-                    while( $array[$i]->$field < $tmp->$field )
-                        $i++;
-
-                    while( $tmp->$field < $array[$j]->$field )
-                        $j--;
-
-                    // swap elements from the two sides
-                    if( $i <= $j)
-                    {
-                        $w = $array[$i];
-                        $array[$i] = $array[$j];
-                        $array[$j] = $w;
-
-                        $i++;
-                        $j--;
-                    }
-
-                }while( $i <= $j );
-
-                if( $i < $r )
-                {
-                    $cur++;
-                    $stack[$cur]['l'] = $i;
-                    $stack[$cur]['r'] = $r;
-                }
-                $r = $j;
-
-            }while( $l < $r );
-
-        }while( $cur != 0 );
+        $this->ChainedQueryData->Take = $count;
+        return $this;
     }
 
     public function First()
     {
-        if(count($this->m_items) > 0){
-            return $this->m_items[0];
+        $this->Take(1);
+        $queryCache = $this->GetItems();
+
+        if(count($queryCache) > 0){
+            return $queryCache[0];
         }else{
             return null;
         }
@@ -199,36 +138,23 @@ class SqlCollection implements IDataCollection
 
     public function offsetSet($offset, $value)
     {
-        if(is_null($offset)){
-            $this->m_items[] = $value;
-        }else{
-            $this->m_items[$offset] = $value;
-        }
+        trigger_error('Offset set not allowed for SqlCollection', E_USER_ERROR);
     }
 
     public function offsetExists($offset)
     {
-        return isset($this->m_items[$offset]);
+        $queryCache = $this->GetItems();
+        return isset($queryCache[$offset]);
     }
 
     public function offsetUnset($offset)
     {
-        unset($this->m_items[$offset]);
+        trigger_error('Offset unset not allowed for SqlCollection', E_USER_ERROR);
     }
 
     public function offsetGet($offset)
     {
-        if(isset($this->m_items[$offset])){
-            return $this->m_items[$offset];
-        }else{
-            return null;
-        }
-    }
-
-    protected function FetchData()
-    {
-        $result = new Collection();
-
-        return $result;
+        $queryCache = $this->GetItems();
+        return $queryCache->offsetGet($offset);
     }
 }

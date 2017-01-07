@@ -8,7 +8,7 @@ class Routing
 {
     private $RoutingConfig;
 
-    // Cache variables and the likes so they don't have to be extracted multiple times
+    // Cache variables and the likes so they dont have to be extracted multiple times
     private $RoutingDescription;
 
     public function __construct($config = null)
@@ -24,6 +24,7 @@ class Routing
         // Remove only the last part of the string
         $requestRoot = str_replace(end($requestPath), '', $requestRoot);
 
+
         // If the request root is the root, there's nothing to clear out
         if($requestRoot != '/') {
             $requestResource = str_replace($requestRoot, '', $requestUrl);
@@ -31,7 +32,7 @@ class Routing
             $requestResource = $requestUrl;
         }
 
-        $requestInfo = $this->GetRequestInfo($requestResource);
+        $requestInfo = RemoveEmpty(explode('/', $requestResource));
 
         if(isset($this->RoutingConfig['Routes'])){
             foreach($this->RoutingConfig['Routes'] as  $route){
@@ -75,9 +76,10 @@ class Routing
     protected function HandleRequest($route, $requestInfo)
     {
         $routeName =  $this->GetRouteName($route);
-        $routePathDescription = $this->RoutingDescription[$routeName];
-        $routeData = $route[$routeName];
 
+        $routePathDescription = $this->RoutingDescription[$routeName];
+
+        $routeData = $route[$routeName];
         $routeDescription = $this->GetRouteDescription($routeData);
         $variableData = $this->MapPathToVariables($requestInfo, $routePathDescription);
 
@@ -137,14 +139,6 @@ class Routing
         return $result;
     }
 
-    public function GetRequestInfo($requestResource)
-    {
-        $requestResource = strtolower($requestResource);
-        $requestInfo = RemoveEmpty(explode('/', $requestResource));
-
-        return $requestInfo;
-    }
-
     public function GetRoutePathDescription($routePathParts)
     {
         $result = array();
@@ -166,7 +160,7 @@ class Routing
             }else{
                 $result[] = array(
                     'Type' => VALUE,
-                    'Value' => strtolower($routePart)
+                    'Value' => $routePart
                 );
             }
         }

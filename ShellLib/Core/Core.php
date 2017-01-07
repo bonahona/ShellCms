@@ -32,6 +32,7 @@ define('CORE_CLASS', 'Core');
 
 require_once('./ShellLib/Core/ConfigParser.php');
 require_once('./ShellLib/Core/Controller.php');
+require_once('./ShellLib/Core/HttpResult.php');
 require_once('./ShellLib/Core/ModelProxy.php');
 require_once('./ShellLib/Core/ModelProxyCollection.php');
 require_once('./ShellLib/Core/Model.php');
@@ -363,34 +364,6 @@ class Core
         }
     }
 
-    protected  function ApplicationCapitalizeControllerName()
-    {
-        $result = false;
-        if($this->ApplicationConfig !== false) {
-            if (array_key_exists('Application', $this->ApplicationConfig)) {
-                if (array_key_exists('CapitalizeControllerName', $this->ApplicationConfig['Application'])) {
-                    $result = $this->ApplicationConfig['Application']['CapitalizeControllerName'];
-                }
-            }
-        }
-
-        return $result;
-    }
-
-    protected  function ApplicationCapitalizeActionName()
-    {
-        $result = false;
-        if($this->ApplicationConfig !== false) {
-            if (array_key_exists('Application', $this->ApplicationConfig)) {
-                if (array_key_exists('CapitalizeActionName', $this->ApplicationConfig['Application'])) {
-                    $result = $this->ApplicationConfig['Application']['CapitalizeActionName'];
-                }
-            }
-        }
-
-        return $result;
-    }
-
     protected function DebugDontCacheModels()
     {
         // Read debug data from the log
@@ -530,14 +503,6 @@ class Core
             $actionName     = $requestData['ActionName'];
             $variables      = $requestData['Variables'];
 
-            if($this->ApplicationCapitalizeControllerName()){
-                $controllerName = ucfirst($controllerName);
-            }
-
-            if($this->ApplicationCapitalizeActionName()){
-                $actionName = ucfirst($actionName);
-            }
-
             $handler = $this->CreateHandler($controllerName, $actionName, $requestData);
         }else{
             $handler = array(
@@ -566,20 +531,25 @@ class Core
             $controller = $handler['controller'];
         }
 
-        $this->UpdateNonces();
         $this->ParseData($controller);
 
-        // Call the action
-        $controller->BeforeAction();
-        call_user_func_array(array($controller, $actionName), $variables);
+        // Call the action and validate its result
+        $httpResult = $controller->BeforeAction();
+        $controller->SetFromPreviousResult($httpResult);
 
-        // Set data based on the call
-        if(function_exists('http_response_code')) {
-            http_response_code($controller->ReturnCode);
+        // If the return code is not 200, no normal code needs to run now
+        if($httpResult == null || $httpResult->ReturnCode == 200) {
+            $httpResult = call_user_func_array(array($controller, $actionName), $variables);
+
+            if ($httpResult == null) {
+                trigger_error('Called action ' . $controllerName . '->' . $actionName . ' does return null', E_USER_ERROR);
+            } else if (!is_a($httpResult, 'HttpResult')) {
+                trigger_error('Called action ' . $controllerName . '->' . $actionName . ' does not resturn a HttpResult object', E_USER_ERROR);
+            }
         }
 
         // 404 errors use the notFound route specified in the application config
-        if($controller->ReturnCode === 404){
+        if($httpResult->ReturnCode === 404){
             $notFoundHandler = $this->CreateNotFoundHandler($requestData);
 
             if($notFoundHandler['error'] == 1) {
@@ -589,12 +559,32 @@ class Core
                 $notFoundAction = $notFoundHandler['actionName'];
 
                 $controller->BeforeAction();
-                call_user_func_array(array($notFoundController, $notFoundAction), array());
+                $httpResult = call_user_func_array(array($notFoundController, $notFoundAction), array());
             }
         }
 
+        $this->DisplayResult($httpResult);
+
         // Clean up
         $this->Database->Close();
+    }
+
+    public  function DisplayResult($httpResult)
+    {
+        // Redirects needs to be handled first
+        if($httpResult->Location != null){
+            header('Location: ' . $httpResult->Location, true, $httpResult->ReturnCode);
+        }
+
+        // Set the HTTP return code (Default 200 = HTTP_OK)
+        if(function_exists('http_response_code')) {
+            http_response_code($httpResult->ReturnCode);
+        }
+
+        // Set the mime type of the request (Default is text/plain, standard for webpages are text/html and for json its application/json
+        header('Content-Type: ' . $httpResult->MimeType);
+
+        echo $httpResult->Content;
     }
 
     // Takes the raw request url and makes sure it follows the expected format
@@ -759,11 +749,7 @@ class Core
                         $controller->Post->Add($subKey, $subValue);
                         $controller->Data->Add($subKey, $subValue);
                     }
-                } else if($key == 'nonce') {
-                    foreach($_POST['nonce'] as $subKey => $subValue){
-                        $controller->Nonces[$subKey] = $subValue;
-                    }
-                } else {
+                }else {
                     $controller->Post->Add($key, $value);
                     $controller->Data->Add($key, $value);
                 }
@@ -814,20 +800,6 @@ class Core
                         $controller->Files[$key] = $storedFile;
                     }
                 }
-            }
-        }
-    }
-
-    public function UpdateNonces()
-    {
-        if(!isset($_SESSION['Nonces'])){
-            $_SESSION['Engine']['Nonces'] = array();
-        }
-
-        foreach($_SESSION['Nonces'] as $key => $nonce){
-            $nonce['Ttl'] = $nonce['Ttl'] -1;
-            if($nonce['Ttl'] < 0){
-                unset($_SESSION['Nonces'][$key]);
             }
         }
     }

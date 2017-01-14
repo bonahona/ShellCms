@@ -3,8 +3,9 @@
 class HomeController extends Controller
 {
     public function Index()
-    {
+    {$this->Logging->Cache
         $this->Title = "Index";
-        $this->View();
+        return $this->View();
+
     }
 }

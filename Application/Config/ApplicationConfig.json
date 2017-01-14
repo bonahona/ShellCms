@@ -1,22 +1,21 @@
 {
   "Application": {
-    "DefaultController": "Home",
-    "DefaultAction": "Index",
-    "DefaultLayout": "Default"
+    "DefaultLayout": "Default",
+    "NotFoundController" : "Home",
+    "NotFoundAction": "NotFound",
+    "CapitalizeControllerName": true,
+    "CapitalizeActionName": true
   },
-
+  "Debug":{
+    "DieOnRoutingError": true,
+    "DontCacheModels": false
+  },
   "Logging": {
     "FileDirectory": "/logs/",
     "Loggers": [
       {
-        "FileLog": {
-          "Name": "Default",
-          "File": "default.log"
-        }
-      },
-      {
-        "DatabaseLog":{
-          "Name": "DbLog"
+        "CacheLogger": {
+          "Name": "Cache"
         }
       }
     ]

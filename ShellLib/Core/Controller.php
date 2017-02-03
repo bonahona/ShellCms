@@ -189,6 +189,7 @@ class Controller
 
         // Enable all the the view variables to be available in the view
         foreach($this->ViewData as $key => $value){
+
             $$key = $value;
         }
 
@@ -266,7 +267,6 @@ class Controller
         $result->Location = $locationString;
         $result->ReturnCode = $code;
 
-        var_dump($result);
         return $result;
     }
 

@@ -165,6 +165,26 @@ class Collection implements IDataCollection
         }
     }
 
+    public function Last()
+    {
+        if(count($this->m_items) > 0){
+            return $this->m_items[count($this->m_items) -1];
+        }else{
+            return null;
+        }
+    }
+
+    public function ToArray()
+    {
+        $result = array();
+
+        foreach($this->m_items as $item){
+            $result[] = $item;
+        }
+
+        return $result;
+    }
+
     public function offsetSet($offset, $value)
     {
         if(is_null($offset)){

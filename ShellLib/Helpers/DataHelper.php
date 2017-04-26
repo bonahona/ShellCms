@@ -129,7 +129,7 @@ class DataHelper implements Iterator, Countable, ArrayAccess
 
             if (isset($element[$primaryKey])) {
                 $result = $model->Find($element[$primaryKey]);
-                
+
                 if($result != null) {
                     foreach ($element as $key => $value) {
                         // Make sure the key exists in the model we are binding to

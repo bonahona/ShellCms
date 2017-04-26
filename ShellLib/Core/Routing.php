@@ -1,8 +1,7 @@
 <?php
-
-define('VARIABLE', 0);
-define('VALUE', 1);
-define('ELLIPSIS', 2);
+const VARIABLE = 0;
+const VALUE = 1;
+const ELLIPSIS = 2;
 
 class Routing
 {
@@ -131,6 +130,7 @@ class Routing
         }
         
         $result = array(
+            'MethodName' => $_SERVER['REQUEST_METHOD'],
             'ControllerName' => $controllerName,
             'ActionName' => $actionName,
             'Variables' => $variables

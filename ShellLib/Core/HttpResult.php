@@ -11,6 +11,6 @@ class HttpResult
         $this->Content = $content;
         $this->MimeType = $mimeType;
         $this->ReturnCode = $returnCode;
-        $this->Location = null;
+        $location = null;
     }
 }

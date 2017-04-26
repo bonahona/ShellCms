@@ -3,8 +3,8 @@
  * Wrapper around a model to allow for model interaction such as load and save of data to the database
  */
 
-define('INT', "i");
-define('STRING', "s");
+const INT = 'i';
+const STRING = 's';
 
 class ModelCollection implements ICollection
 {
@@ -24,7 +24,6 @@ class ModelCollection implements ICollection
         return $result;
     }
 
-    /* @return Model */
     public function Find($id)
     {
         $result = $this->GetInstance()->GetDatabase()->Find($this, $id);
@@ -36,14 +35,12 @@ class ModelCollection implements ICollection
         return $result;
     }
 
-    /* @return bool */
     public function Exists($id)
     {
         $result = $this->GetInstance()->GetDatabase()->Exists($this, $id);
         return $result;
     }
 
-    /* @return ICollection */
     public function Where($conditions)
     {
         $conditions = $this->ConvertConditions($conditions);
@@ -57,7 +54,6 @@ class ModelCollection implements ICollection
         return $result;
     }
 
-    /* @return bool */
     public function Any($conditions)
     {
         $conditions = $this->ConvertConditions($conditions);
@@ -77,7 +73,6 @@ class ModelCollection implements ICollection
         }
     }
 
-    /* @return ICollection */
     public function All()
     {
         $result = $this->GetInstance()->GetDatabase()->All($this);
@@ -89,7 +84,6 @@ class ModelCollection implements ICollection
         return $result;
     }
 
-    /* @return void */
     public function Delete($model)
     {
         return $this->GetInstance()->GetDatabase()->Delete($this, $model);
@@ -154,31 +148,9 @@ class ModelCollection implements ICollection
         return $result;
     }
 
-    public function Last()
-    {
-        $result = $this->GetInstance()->GetDatabase()->Last($this);
-
-        if($result != null) {
-            $result->OnLoad();
-        }
-
-        return $result;
-    }
-
     public function Copy($item)
     {
         throw new Exception("ModelCollection::Copy() not supported");
-    }
-
-    public function ToArray()
-    {
-        $result = array();
-
-        foreach($this->All() as $item){
-            $result[] = $result;
-        }
-
-        return $result;
     }
 
     protected function GetInstance()

@@ -11,7 +11,6 @@ interface IDatabaseDriver
     public function Exists($modelCollection, $id);
     public function Where($modelCollection, $conditions, $parameters);
     public function First($modelCollection);
-    public function Last($modelCollection);
     public function Any($modelCollection, $conditions, $parameters);
     public function All($modelCollection);
     public function Keys($modelCollection);

@@ -1,7 +1,7 @@
 <?php
 
-define('DEFAULT_MIME_TYPE', 'text/html');
-define('DEFAULT_RETURN_CODE', '200');
+const DEFAULT_MIME_TYPE = 'text/html';
+const DEFAULT_RETURN_CODE = '200';
 
 class Controller
 {
@@ -103,17 +103,6 @@ class Controller
         $this->Session = new SessionHelper();
     }
 
-    public function SetFromPreviousResult($httpResult = null)
-    {
-        // Nothing to set
-        if($httpResult == null){
-            return;
-        }
-
-        $this->ReturnCode = $httpResult->ReturnCode;
-        $this->MimeType = $httpResult->MimeType;
-    }
-
     public  function GetCore()
     {
         return $this->Core;
@@ -189,7 +178,6 @@ class Controller
 
         // Enable all the the view variables to be available in the view
         foreach($this->ViewData as $key => $value){
-
             $$key = $value;
         }
 
@@ -245,7 +233,14 @@ class Controller
         $result = new HttpResult();
         $result->MimeType = 'text/plain';
         $result->Content = $text;
+        return $result;
+    }
 
+    protected function Http($text)
+    {
+        $result = new HttpResult();
+        $result->MimeType = 'text/html';
+        $result->Content = $text;
         return $result;
     }
 

@@ -1,11 +1,10 @@
 <?php
 require_once('ShellLib/Logging/Log.php');
 
-define('LOGGING_FATAL', 0);
-define('LOGGING_WARNING', 1);
-define('LOGGING_NOTICE', 2);
-
-define('LOGGING_FETCH_ALL', 0);       // Not a valid flag when writing to the log, but allowed when fetching messages based on their level
+const LOGGING_FATAL = 0;
+const LOGGING_WARNING = 1;
+const LOGGING_NOTICE = 2;
+const LOGGING_FETCH_ALL = 0;       // Not a valid flag when writing to the log, but allowed when fetching messages based on their level
 
 class Logging
 {

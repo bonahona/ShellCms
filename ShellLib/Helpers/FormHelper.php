@@ -113,22 +113,6 @@ class FormHelper
             $options = array();
         }
 
-
-        if(isset($options['value'])){
-            $value = $options['value'];
-        }else{
-            $value = $this->ParseValue($name);
-        }
-        unset($options['value']);
-
-        if($value == 1 || $value == true){
-            if(!isset($options['attributes'])){
-                $options['attributes'] = array();
-            }
-
-            $options['attributes']['checked'] = $value;
-        }
-        
         $options['type'] = 'checkbox';
         return $this->Input($name, $options);
     }
@@ -208,7 +192,7 @@ class FormHelper
             if(is_array($list)){
                 $result .= "<option value=\"-1\">-None-</option>\n";
             }else{
-                $result .= "<option value=\"0\" selected=\"\">-None-</option>\n";
+                $result .= "<option value=\"NULL\" selected=\"\">-None-</option>\n";
             }
         }
 

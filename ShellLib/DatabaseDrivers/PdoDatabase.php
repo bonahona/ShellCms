@@ -108,7 +108,8 @@ class PdoDatabase implements IDatabaseDriver
         TABLE_NAME=? and COLUMN_NAME=?";
 
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)) {
-            trigger_error('In PdoDatabase::DescribeRelation; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
         }
 
         $params = array($class, $column);
@@ -137,7 +138,8 @@ class PdoDatabase implements IDatabaseDriver
 
         $sqlStatement = "SELECT * FROM $tableName WHERE $primaryKey=?";
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            trigger_error('In PdoDatabase::Find; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
         }
 
         $params = array($id);
@@ -164,7 +166,8 @@ class PdoDatabase implements IDatabaseDriver
 
         $sqlStatement = "SELECT $primaryKey FROM $tableName WHERE $primaryKey=?";
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            trigger_error('In PdoDatabase::Exists; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
         }
 
         $params = array(0 => $id);
@@ -187,7 +190,8 @@ class PdoDatabase implements IDatabaseDriver
         $sqlStatement = "SELECT * FROM $tableName WHERE $conditions";
 
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            trigger_error('In PdoDatabase::Where; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
         }
 
         $preparedStatement->execute($parameters);
@@ -219,33 +223,8 @@ class PdoDatabase implements IDatabaseDriver
 
         $sqlStatement = "SELECT * FROM $tableName LIMIT 1";
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            trigger_error('In PdoDatabase::First; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
-        }
-
-        $preparedStatement->execute();
-        if($preparedStatement->rowCount() == 0){
-            return null;
-        }
-
-        $row = $preparedStatement->fetch();
-        $result = new $modelCollection->ModelName($modelCollection);
-        $result->FlagAsSaved();
-        foreach($columns as $key){
-            $result->$key = $row[$key];
-        }
-
-        return $result;
-    }
-
-    public function Last($modelCollection)
-    {
-        $tableName = $modelCollection->ModelCache['MetaData']['TableName'];
-        $primaryKey = $modelCollection->ModelCache['MetaData']['PrimaryKey'];
-        $columns = array_keys($modelCollection->ModelCache['Columns']);
-
-        $sqlStatement = "SELECT * FROM $tableName order by $primaryKey DESC LIMIT 1";
-        if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            trigger_error('In PdoDatabase::Last; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
         }
 
         $preparedStatement->execute();
@@ -271,7 +250,8 @@ class PdoDatabase implements IDatabaseDriver
         $sqlStatement = "SELECT count($primaryKey) as RowExists FROM $tableName WHERE $conditions";
 
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            trigger_error('In PdoDatabase::Any; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
         }
 
         $preparedStatement->execute($parameters);
@@ -290,7 +270,8 @@ class PdoDatabase implements IDatabaseDriver
         $sqlStatement = "SELECT $primaryKey FROM $tableName";
 
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            trigger_error('In PdoDatabase::Keys; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
         }
 
         $preparedStatement->execute();
@@ -312,7 +293,8 @@ class PdoDatabase implements IDatabaseDriver
         $sqlStatement = "SELECT * FROM $tableName";
 
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            trigger_error('In PdoDatabase::All; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
         }
 
         $preparedStatement->execute();
@@ -348,7 +330,8 @@ class PdoDatabase implements IDatabaseDriver
 
         $sqlStatement = "DELETE FROM $tableName WHERE $primaryKey = ?;";
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            trigger_error('In PdoDatabase::Delete; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
         }
 
         $params = array($id);
@@ -361,7 +344,8 @@ class PdoDatabase implements IDatabaseDriver
 
         $sqlStatement = "delete from $tableName";
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            trigger_error('In PdoDatabase::Clear; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->erroInfo);
         }
 
         $preparedStatement->execute();
@@ -377,12 +361,31 @@ class PdoDatabase implements IDatabaseDriver
         $sqlStatement = "INSERT INTO $tableName($columns) VALUES($valuePlaceHolders);";
 
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            trigger_error('In PdoDatabase::Insert; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
         }
 
-        $params = $this->GetParams($modelCollection, $model);
-        if(!$preparedStatement->execute($params)){
-            trigger_error('In PdoDatabase::Insert; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
+        $values = array();
+        foreach($modelCollection->ModelCache['MetaData']['ColumnNames'] as $key){
+
+            $value = $model->$key;
+            $values[] = $value;
+        }
+
+        /*
+        $params = array();
+        foreach($values as $key => $value){
+            if($value == '0'){
+                $params[] = null;
+            }else {
+                $params[] = $values[$key];
+            }
+        }
+        */
+
+        if(!$preparedStatement->execute($values)){
+            echo "Failed to execute PDO statement";
+            var_dump($this->Database->errorInfo());
         }
 
         $insertId = $this->Database->lastInsertId();
@@ -411,42 +414,30 @@ class PdoDatabase implements IDatabaseDriver
         $sqlStatement = "UPDATE $tableName SET $values WHERE $primaryKey=?";
 
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            trigger_error('In PdoDatabase::Update; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
         }
-
-        $params = $this->GetParams($modelCollection, $model);
-
-        $id = $model->$primaryKey;
-        $params[] = $id;
-        if(!$preparedStatement->execute($params)){
-            trigger_error('In PdoDatabase::Update; Failed to prepare PDO statement: ' . implode(',', $this->Database->errorInfo()), E_USER_ERROR);
-        }
-    }
-
-    private function GetParams($modelCollection, $model)
-    {
-        $columnData = $modelCollection->ModelCache['Columns'];
-        $primaryKey = $modelCollection->ModelCache['MetaData']['PrimaryKey'];
 
         $values = array();
-        foreach($columnData as $key => $value){
-            if($key != $primaryKey) {
-                $values[] = array(
-                    'value' => $model->$key,
-                    'allowNull' => $value['Null']
-                );
-            }
+        foreach($modelCollection->ModelCache['MetaData']['ColumnNames'] as $key){
+            $values[] = $model->$key;
         }
+
+        $id = $model->$primaryKey;
 
         $params = array();
         foreach($values as $key => $value){
-            if($value['allowNull'] == 'YES' && $value['value'] == '0'){
+            if($value === '0'){
                 $params[] = null;
             }else {
-                $params[] = $values[$key]['value'];
+                $params[] = $values[$key];
             }
         }
 
-        return $params;
+        $params[] = $id;
+        if(!$preparedStatement->execute($params)){
+            echo "Failed to execute PDO statement";
+            var_dump(array('Sql' => $sqlStatement, 'Params' => $params, 'Error' => $this->Database->errorInfo()));
+        }
     }
 }

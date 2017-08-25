@@ -11,9 +11,14 @@ class ModelCollection implements ICollection
     public $ModelCache;
     public $ModelName;
 
+    /* @return Model */
     public function Create($defaultValues = array())
     {
         $result = new $this->ModelName($this);
+
+        if(!isset($defaultValues[$this->ModelCache['MetaData']['PrimaryKey']])){
+            $defaultValues[$this->ModelCache['MetaData']['PrimaryKey']] = 0;
+        }
 
         foreach($defaultValues as $key => $value){
             $result->$key = $value;
@@ -24,6 +29,7 @@ class ModelCollection implements ICollection
         return $result;
     }
 
+    /* @return Model */
     public function Find($id)
     {
         $result = $this->GetInstance()->GetDatabase()->Find($this, $id);
@@ -35,6 +41,7 @@ class ModelCollection implements ICollection
         return $result;
     }
 
+    /* @return bool */
     public function Exists($id)
     {
         $result = $this->GetInstance()->GetDatabase()->Exists($this, $id);
@@ -43,6 +50,10 @@ class ModelCollection implements ICollection
 
     public function Where($conditions)
     {
+        $result = new SqlCollection($this, null);
+        return $result->Where($conditions);
+
+        /*
         $conditions = $this->ConvertConditions($conditions);
         $whereConditions = $conditions->GetWhereClause();
         $result = $this->GetInstance()->GetDatabase()->Where($this, $whereConditions['ConditionString'], $whereConditions['Parameters']);
@@ -52,25 +63,14 @@ class ModelCollection implements ICollection
         }
 
         return $result;
+        */
     }
 
     public function Any($conditions)
     {
-        $conditions = $this->ConvertConditions($conditions);
+        $conditions = ConvertConditions($conditions);
         $whereConditions = $conditions->GetWhereClause();
         return $this->GetInstance()->GetDatabase()->Any($this, $whereConditions['ConditionString'], $whereConditions['Parameters']);
-    }
-
-    // Helper to make sure all conditions are proper DatabaseWhereCondition objects
-    private function ConvertConditions($conditions)
-    {
-        if(is_array($conditions)){
-            return AndCondition($conditions);
-        }else if(is_a($conditions, 'DatabaseWhereCondition')){
-            return $conditions;
-        }else{
-            trigger_error('Invalid WHERE condition for model query', E_USER_WARNING);
-        }
     }
 
     public function All()
@@ -117,6 +117,11 @@ class ModelCollection implements ICollection
         $this->Save($item);
     }
 
+    public function InsertAt($index, $item)
+    {
+        trigger_error('ModelCollection does not support Insert.', E_USER_ERROR);
+    }
+
     public function Keys()
     {
         return $this->GetInstance()->GetDatabase()->Keys($this);
@@ -153,7 +158,7 @@ class ModelCollection implements ICollection
         throw new Exception("ModelCollection::Copy() not supported");
     }
 
-    protected function GetInstance()
+    public function GetInstance()
     {
         $coreInstanceProperty = new ReflectionProperty(CORE_CLASS, 'Instance');
         $coreInstance =  $coreInstanceProperty->getValue();

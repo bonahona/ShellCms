@@ -55,7 +55,6 @@ class Controller
     public $Cache;                      // Reference to the Core's cache object
 
     // Data sent
-
     /* @var DataHelper */
     public $Post;                       // Stores all Post data variables sent in
 
@@ -83,8 +82,12 @@ class Controller
     public $Title;
     public $Layout;
 
-    // Data that will be used in the view
+    // Data that will/can be used in the view
     public $ViewData = array();
+
+    // Can be used to queue scripts from controller fiels and then be read in the view and/or layout
+    public $JavascriptFiles = array();
+    public $CssFiles = array();
 
     function __construct(){
 
@@ -162,9 +165,9 @@ class Controller
     // Different ways to render something
     protected function View($viewName = null){
 
-        $result = new HttpResult();
-        $result->ReturnCode = $this->ReturnCode;
-        $result->MimeType = $this->MimeType;
+        $httpResult = new HttpResult();
+        $httpResult->ReturnCode = $this->ReturnCode;
+        $httpResult->MimeType = $this->MimeType;
 
         if($viewName == null){
             $viewName = $this->Action;
@@ -191,8 +194,8 @@ class Controller
         $layouts = $this->GetLayoutPaths();
 
         if(empty($layouts)){
-            $result->Content = $view;
-            return $result;
+            $httpResult->Content = $view;
+            return $httpResult;
         }
 
         // Go through the layout candidate files in order and make sure they exists. The first match will act as the layout for this view
@@ -206,7 +209,7 @@ class Controller
         }
 
         if($foundLayout == null){
-            $result->Content = $view;
+            $httpResult->Content = $view;
         }else{
             $this->CurrentCore = $foundLayout['core'];
             ob_start();
@@ -214,10 +217,10 @@ class Controller
             $layoutView = ob_get_clean();
             $this->CurrentCore = $this->Core;
 
-            $result->Content = $layoutView;
+            $httpResult->Content = $layoutView;
         }
 
-        return $result;
+        return $httpResult;
     }
 
     protected function Json($data){
@@ -349,6 +352,26 @@ class Controller
         }else{
             return null;
         }
+    }
+
+    protected function EnqueueJavascript($javascriptFile)
+    {
+        $this->JavascriptFiles[] = $javascriptFile . "\n";
+    }
+
+    protected function EnqueueCssFiles($cssFiles)
+    {
+        $this->CssFiles[] = $cssFiles;
+    }
+
+    protected function ClearJavascript()
+    {
+        $this->JavascriptFiles = array();
+    }
+
+    protected function ClearCss()
+    {
+        $this->CssFiles = array();
     }
 
     // Function is called before the actions is

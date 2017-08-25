@@ -8,7 +8,11 @@ class Model
     protected $References;              // Model proxy objects for references
     protected $ReferenceCollections;    // List of other objects referring to this one
     protected $CustomProperties;        // Custom properties added from without the db. Wont be saved back
+
+    /* @var Models */
     protected $Models;                  // Reference to the models object so other models can be searched for with references
+
+    /* @var Helpers */
     protected $Helpers;                 // Reference to the helpers list
 
     function __construct($modelCollection)
@@ -40,6 +44,20 @@ class Model
 
         $this->IsSaved = false;
         $this->IsDirty = false;
+    }
+
+    public function ReloadReferences()
+    {
+        $this->SetupReferences();
+        $this->SetupReverseReferences();
+    }
+
+    // If the model entity has been created rather than loaded from DB, references and the likes needs to set manually.
+    // This functions performs all neccessary operations to make the model perform just like any other loaded model enity.
+    public function Load()
+    {
+        $this->ReloadReferences();
+        $this->OnLoad();
     }
 
     protected function SetupReferences()
@@ -164,6 +182,14 @@ class Model
             $result[$key] = $value;
         }
 
+        foreach($this->References as $key => $value){
+            $result[$key] = 'Proxy Object';
+        }
+
+        foreach($this->ReferenceCollections as $key => $value){
+            $result[$key] = 'Proxy Collection';
+        }
+
         return $result;
     }
 
@@ -189,6 +215,7 @@ class Model
         return $result;
     }
 
+    // TODO: This function should lie somewhere else. Duplicate in PhpDocWriter
     protected function CreateReferenceName($columnName)
     {
         if(endsWith($columnName, 'Id')){
@@ -204,6 +231,15 @@ class Model
     {
         foreach($this->Properties as $key => $property){
             if($property === 0 || $property === '0'){
+                $this->$key = null;
+            }
+        }
+    }
+
+    public function ConvertNullToNull()
+    {
+        foreach($this->Properties as $key => $property){
+            if($property === 'NULL' || $property === 'null'){
                 $this->$key = null;
             }
         }

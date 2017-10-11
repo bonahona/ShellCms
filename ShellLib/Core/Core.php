@@ -366,6 +366,10 @@ class Core
     {
         $this->Caching = new Caching();
 
+        if(!isset($this->ApplicationConfig['Caching'])){
+            return;
+        }
+
         foreach($this->ApplicationConfig['Caching'] as $type => $caching){
 
             $cacheTypeFileName = SHELL_LIB_CACHE_FOLDER . $type . PHP_FILE_ENDING;

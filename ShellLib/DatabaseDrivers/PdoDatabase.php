@@ -131,6 +131,97 @@ class PdoDatabase implements IDatabaseDriver
         // Not required for a PDO database object
     }
 
+
+    /**
+     * @param DatabaseTableBuilder $databaseTableBuilder
+     * @param bool $verbose
+     * @return mixed
+     */
+    public function BuildTable($databaseTableBuilder, $verbose = false)
+    {
+        $sqlStatement = "create table if not exists " . strtolower($databaseTableBuilder->TableName) . "(\n";
+
+        $columnSql = array();
+        $referencesSql = array();
+        foreach($databaseTableBuilder->Columns as $column){
+            $columnSql[] = $column->Name . " " . $column->Type . " " . implode(" ", $column->Special);
+
+            if(count($column->References) > 0){
+                $referencesSql[] = "foreign key(" . $column->Name . ")  references " . strtolower($column->References['table']) . "(" . $column->References['column'] . ")";
+            }
+        }
+
+        $sqlStatement .= implode(",\n", array_merge($columnSql, $referencesSql));
+
+        $sqlStatement .= ")";
+
+        if($verbose === true){
+            echo "Sql statment:" . $sqlStatement;
+        }
+
+        if($this->Database == null){
+            return "Database missing. Check DatabaseConfig.json";
+        }
+        if(!$this->Database->exec($sqlStatement)){
+            print_r($this>$this->Database->errorInfo());
+            return $this->Database->errorInfo()[2];
+        }
+
+        return true;
+    }
+
+    /*
+     * @param String $migrationName
+     * @return bool
+     */
+    public function IsMigrationRun($migrationName, $type)
+    {
+        $sql = 'select count(*) as result from __migrationhistory where Name = \'' . $migrationName . '\' and Type = \'' . $type . '\'';
+
+        if(!$preparedStatement = $this->Database->prepare($sql)){
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
+        }
+
+        $preparedStatement->execute();
+        $row = $preparedStatement->fetch();
+        $isFound = $row['result'];
+
+        return $isFound == 1;
+    }
+
+    /*
+     * @param String $migrationName
+     */
+    public function NotifyMigrationRun($migrationName, $type)
+    {
+        $timeStamp = date('c');
+        $sql = 'insert into __migrationhistory(Name, TimeStamp, Type) values(\'' . $migrationName . '\', \'' . $timeStamp . '\', \'' . $type . '\')';
+
+        if(!$preparedStatement = $this->Database->prepare($sql)){
+            echo "Failed to prepare PDO statement";
+            var_dump($this->Database->errorInfo());
+        }
+
+        $preparedStatement->execute();
+
+        $isFound = &$result;
+        return $isFound == 0;
+    }
+
+    public function DropTable($databaseDropTable)
+    {
+        $sqlStatement = "drop table if exists " . strtolower($databaseDropTable->TableName);
+        if($this->Database == null){
+            return "Database missing. Check DatabaseConfig.json";
+        }
+        if(!$this->Database->exec($sqlStatement)){
+            return $this->Database->errorInfo()[2];
+        }
+
+        return true;
+    }
+
     public function Execute($sqlCollection)
     {
         $result = new Collection();
@@ -468,7 +559,7 @@ class PdoDatabase implements IDatabaseDriver
         }
 
         if(!$preparedStatement->execute($values)){
-            echo "Failed to execute PDO statement";
+            echo "Failed to execute PDO statement " . $sqlStatement . "\nValues: " . implode(',', $values);
             var_dump($this->Database->errorInfo());
         }
 

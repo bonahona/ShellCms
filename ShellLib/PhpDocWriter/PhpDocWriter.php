@@ -163,7 +163,7 @@ class PhpDocWriter
         } else if(endsWith($columnName, '_id')){
             return replaceLastOccurence($columnName, '_id', '');
         }else{
-            return $columnName + 'Object';
+            return $columnName . 'Object';
         }
     }
 }

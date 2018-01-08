@@ -121,6 +121,11 @@ class Controller
         return $this->ViewData;
     }
 
+    public function GetBody()
+    {
+        return file_get_contents('php://input');
+    }
+
     protected function IsPost(){
         return ($this->Verb == "POST");
     }

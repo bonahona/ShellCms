@@ -23,4 +23,5 @@ interface IDatabaseDriver
     public function Clear($modelCollection);
     public function Insert($modelCollection, &$model);
     public function Update($modelCollection, $model);
+    public function RunSql($sql);
 }

@@ -7,15 +7,8 @@ RUN a2enmod rewrite
 RUN apt-get update
 RUN apt-get install -y curl git zip unzip
 
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-RUN composer require youshido/graphql
-
 COPY . /var/www/html
-
-RUN chmod -R -f 751 /var/www/html
-RUN chown -R -f www-data /var/www/html
-RUN chgrp -R -f www-data /var/www/html
+RUN chmod -R 751 *
 
 ENV APACHE_RUN_USER www-data
 ENV APACHE_RUN_GROUP www-data

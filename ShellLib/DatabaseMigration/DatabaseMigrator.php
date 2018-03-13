@@ -49,6 +49,10 @@ class DatabaseMigrator
         $this->QueuedTasks[] = new DatabaseSeed($model);
     }
 
+    public function RunSql($sql){
+        $this->QueuedTasks[] = new DatabaseRunSql($sql);
+    }
+
     public function Up()
     {
         foreach($this->FindAllMigrations('up') as $migration){

@@ -258,6 +258,14 @@ class PdoDatabase implements IDatabaseDriver
         return $result;
     }
 
+    public function RunSql($sql)
+    {
+        $result = $this->Database->exec($sql);
+        if($result === false){
+            print_r($this->Database->errorInfo());
+        }
+    }
+
     private function GetSql($sqlCollection, $depth)
     {
         $modelCollection = $sqlCollection->GetModelCollection();
@@ -531,7 +539,7 @@ class PdoDatabase implements IDatabaseDriver
         $sqlStatement = "delete from $tableName";
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
             echo "Failed to prepare PDO statement";
-            var_dump($this->Database->erroInfo());
+            var_dump($this->Database->errorInfo());
         }
 
         $preparedStatement->execute();

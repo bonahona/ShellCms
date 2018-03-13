@@ -128,7 +128,9 @@ class PhpDocWriter
         }
 
         foreach ($modelCache['References'] as $referenceName => $reference) {
-            $result[] = '* @property ' . $this->ModelHelper->GetModelName($reference['TableName']) . ' ' . $this->CreateReferenceName($referenceName);
+            if($reference['TableName'] != '') {
+                $result[] = '* @property ' . $this->ModelHelper->GetModelName($reference['TableName']) . ' ' . $this->CreateReferenceName($referenceName);
+            }
         }
 
         foreach($modelCache['ReversedReferences'] as $referenceName => $reference){

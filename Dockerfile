@@ -5,7 +5,7 @@ RUN docker-php-ext-install -j$(nproc) pdo pdo_mysql
 RUN a2enmod rewrite
 
 RUN apt-get update
-RUN apt-get install -y curl git zip unzip
+RUN apt-get install -y curl git zip unzip dos2unix
 
 COPY . /var/www/html
 RUN chmod -R 751 *
@@ -20,5 +20,7 @@ COPY apache-config.conf /etc/apache2/sites-enabled/000-default.conf
 
 RUN rm -rf /var/www/html/Application/Temp/
 
-#CMD /usr/sbin/apache2ctl -D FOREGROUND
+RUN dos2unix run.sh
+RUN dos2unix Scripts/Bash/*
+
 CMD ./run.sh

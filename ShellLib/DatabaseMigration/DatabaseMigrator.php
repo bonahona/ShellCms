@@ -131,7 +131,7 @@ class DatabaseMigrator
     public function RunTasks()
     {
         foreach($this->QueuedTasks as $task){
-            echo $task->Description() . "... ";
+            echo $task->Description() . "... \n";
             $result = $task->Execute($this);
             var_dump($result);
             if($result === true){

@@ -38,7 +38,7 @@ class DatabaseTableBuilder implements IDatabaseMigratorTask
 
     public function Execute($migrator)
     {
-        return $migrator->Database->BuildTable($this);
+        return $migrator->Database->BuildTable($this, true);
     }
 
     public function Description()

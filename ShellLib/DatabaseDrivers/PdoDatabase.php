@@ -25,6 +25,7 @@ class PdoDatabase implements IDatabaseDriver
         );
 
         $db->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         $this->Database = $db;
         $this->Config = $config;
@@ -156,7 +157,7 @@ class PdoDatabase implements IDatabaseDriver
         $sqlStatement .= ")";
 
         if($verbose === true){
-            echo "Sql statment:" . $sqlStatement;
+            echo $sqlStatement . "\n";
         }
 
         if($this->Database == null){
@@ -297,8 +298,7 @@ class PdoDatabase implements IDatabaseDriver
         if($sqlCollection->OrderByCondition != null){
             $order = $sqlCollection->OrderByCondition['Order'];
 
-            $sqlStatement .= " ORDER BY ? $order";
-            $parameters[] = $sqlCollection->OrderByCondition['Field'];
+            $sqlStatement .= " ORDER BY " . $sqlCollection->OrderByCondition['Field']. " " . $order;
         }
 
         $limit = array('use' => false,'skip' => 0, 'take' => 0);
@@ -524,7 +524,7 @@ class PdoDatabase implements IDatabaseDriver
 
         $sqlStatement = "DELETE FROM $tableName WHERE $primaryKey = ?;";
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            echo "Failed to prepare PDO statement";
+            echo "Failed to prepare PDO statement <br/>";
             var_dump($this->Database->errorInfo());
         }
 
@@ -538,7 +538,7 @@ class PdoDatabase implements IDatabaseDriver
 
         $sqlStatement = "delete from $tableName";
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            echo "Failed to prepare PDO statement";
+            echo "Failed to prepare PDO statement <br/>";
             var_dump($this->Database->errorInfo());
         }
 
@@ -555,7 +555,7 @@ class PdoDatabase implements IDatabaseDriver
         $sqlStatement = "INSERT INTO $tableName($columns) VALUES($valuePlaceHolders);";
 
         if(!$preparedStatement = $this->Database->prepare($sqlStatement)){
-            echo "Failed to prepare PDO statement";
+            echo "Failed to prepare PDO statement <br/>";
             var_dump($this->Database->errorInfo());
         }
 
@@ -567,7 +567,7 @@ class PdoDatabase implements IDatabaseDriver
         }
 
         if(!$preparedStatement->execute($values)){
-            echo "Failed to execute PDO statement " . $sqlStatement . "\nValues: " . implode(',', $values);
+            echo "Failed to execute PDO statement " . $sqlStatement . "\nValues: " . implode(',', $values). " <br/>";
             var_dump($this->Database->errorInfo());
         }
 
@@ -610,7 +610,7 @@ class PdoDatabase implements IDatabaseDriver
 
         $params = array();
         foreach($values as $key => $value){
-            if($value === '0'){
+            if($value === 'NULL'){
                 $params[] = null;
             }else {
                 $params[] = $values[$key];
@@ -619,7 +619,7 @@ class PdoDatabase implements IDatabaseDriver
 
         $params[] = $id;
         if(!$preparedStatement->execute($params)){
-            echo "Failed to execute PDO statement";
+            echo "Failed to execute PDO statement " . $sqlStatement . "\nValues: " . implode(',', $values). " <br/>";
             var_dump(array('Sql' => $sqlStatement, 'Params' => $params, 'Error' => $this->Database->errorInfo()));
         }
     }
